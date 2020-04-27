@@ -34,13 +34,22 @@ public class DateUtil {
     public static String getUiShortStrDate(Date date, User user, String defLocalStr) throws Exception {
         if (date == null) return null;
 
-        String userLoacalStr = user != null ? user.getLocale() : defLocalStr;
+        try
+        {        String userLoacalStr = user != null ? user.getLocale() : defLocalStr;
 
         String tpStr = getEnvVar("javaUiDateTimeShort", userLoacalStr, DEF_JAVA_UI_DATE_TIME_SHORT, defLocalStr);
         SimpleDateFormat tp = new SimpleDateFormat(tpStr);
 
         tp.setTimeZone(getTimeZone(user));
         return tp.format(date);
+        }
+        catch(Exception e)
+        {
+        	System.out.println(e);
+        }
+        SimpleDateFormat tp = new SimpleDateFormat("dd-MM-yyyy HH:mm");
+        return tp.format(date);
+        
     }
 
     /**

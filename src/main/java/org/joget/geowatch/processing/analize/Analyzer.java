@@ -3,6 +3,7 @@ package org.joget.geowatch.processing.analize;
 import org.joget.commons.util.LogUtil;
 import org.joget.geowatch.db.dto.Log;
 import org.joget.geowatch.db.dto.Trip;
+import org.joget.geowatch.db.service.GeofenceService;
 import org.joget.geowatch.processing.analize.dto.AnalyzeTripContext;
 import org.joget.geowatch.processing.analize.impl.DoorSensorAnalizer;
 import org.joget.geowatch.processing.analize.impl.GeofenceAnalyzer;
@@ -57,11 +58,13 @@ public abstract class Analyzer {
         
     }
 
-    public static void analyze(VehicleProcessData vehicleProcessData) throws Exception {
-
+  public static void analyze(VehicleProcessData vehicleProcessData,GeofenceService geofenceService) throws Exception {
+    	
         Trip trip = vehicleProcessData.getTrip();
         AnalyzeTripContext tripContext = getTripContext(trip);
-
+        
+        tripContext.setBlackListed(geofenceService.listgeotype("BLACKLIST_ZONE"));
+        tripContext.setAlertzones(geofenceService.listgeotype("ALERT_ZONE"));
         for (LogData logDate : vehicleProcessData.getNewLogDataArr()) {
             try {
                 if (logDate != null) analyze(tripContext, logDate);
@@ -71,6 +74,7 @@ public abstract class Analyzer {
             }
         }
     }
+
 
     public static AnalyzeTripContext getTripContext(Trip trip) throws Exception {
         return AnalyzeTripContext.getInstance(trip);

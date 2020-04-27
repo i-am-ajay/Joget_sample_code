@@ -13,6 +13,7 @@ import org.joget.geowatch.db.dto.Trip;
 import org.joget.geowatch.db.dto.inner.GhtVehicleInnerEntity;
 import org.joget.geowatch.db.dto.inner.VehicleLastPositionInnerEntity;
 import org.joget.geowatch.db.service.EventService;
+import org.joget.geowatch.db.service.GeofenceService;
 import org.joget.geowatch.db.service.LogService;
 import org.joget.geowatch.db.service.NotifyService;
 import org.joget.geowatch.db.service.TripService;
@@ -53,12 +54,13 @@ public class LogDeviseProcess {
     private NotifyProcess notifyProcess;
     private NotifyService notifyService;
     private PodProcess podProcess;
+    private GeofenceService geofenceService;
 
     public LogDeviseProcess(
             TripService tripService, LogService logService,
             GhtLogProcessing ghtLogProcessing, EventProcess eventProcess,
             EventService eventService, NotifyProcess notifyProcess,
-            NotifyService notifyService, PodProcess podProcess) {
+            NotifyService notifyService, PodProcess podProcess,GeofenceService geofenceService) {
         this.tripService = tripService;
         this.logService = logService;
         this.ghtLogProcessing = ghtLogProcessing;
@@ -67,6 +69,7 @@ public class LogDeviseProcess {
         this.notifyProcess = notifyProcess;
         this.notifyService = notifyService;
         this.podProcess = podProcess;
+        this.geofenceService=geofenceService;
     }
 
     public void process() throws Exception {
@@ -91,7 +94,7 @@ public class LogDeviseProcess {
         LogUtil.info(TAG, "PROCESS LOG 4 TRIP. Id: " + trip.getId());
 
         VehicleProcessData vehicleProcessData = ghtLogProcessing.process(trip);
-        Analyzer.analyze(vehicleProcessData);
+        Analyzer.analyze(vehicleProcessData,geofenceService);
         saveLog(vehicleProcessData);
         updateTripLastPosition(vehicleProcessData, trip);
 

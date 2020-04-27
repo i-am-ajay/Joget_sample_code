@@ -29,7 +29,11 @@ public class AnalyzeTripContext {
     protected List<Geofence> alertzones;
     protected List<ExGeo> alertzonegeos;
 
-    public Route getRoute() {
+    public void setBlackListed(List<Geofence> blackListed) {
+		this.blackListed = blackListed;
+	}
+
+	public Route getRoute() {
         return route;
     }
 
