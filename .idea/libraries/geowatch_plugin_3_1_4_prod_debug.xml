@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="geowatch_plugin-3.1.4-prod-debug">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/target/geowatch_plugin-3.1.4-prod-debug.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

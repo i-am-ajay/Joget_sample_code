@@ -3,6 +3,7 @@ package org.joget.geowatch.processing.analize.dto;
 import org.joget.commons.util.LogUtil;
 import org.joget.geowatch.db.dto.Trip;
 import org.joget.geowatch.db.dto.inner.WayPointInnerEntity;
+import org.joget.geowatch.db.service.LogService;
 import org.joget.geowatch.processing.analize.impl.ExGeo;
 import org.joget.geowatch.util.geo.dto.Route;
 import org.joget.geowatch.db.dto.Geofence;
@@ -28,8 +29,19 @@ public class AnalyzeTripContext {
     
     protected List<Geofence> alertzones;
     protected List<ExGeo> alertzonegeos;
+    protected LogService logService;
 
-    public void setBlackListed(List<Geofence> blackListed) {
+  
+
+	public LogService getLogService() {
+		return logService;
+	}
+
+	public void setLogService(LogService logService) {
+		this.logService = logService;
+	}
+
+	public void setBlackListed(List<Geofence> blackListed) {
 		this.blackListed = blackListed;
 	}
 

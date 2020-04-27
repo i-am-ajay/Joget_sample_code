@@ -46,7 +46,25 @@ public class NoDataAnalyzer extends Analyzer {
 
 		switch (eventType) {
 		case NO_DATA:
-			log.getAnalyzeResult().put(eventType, analyze(eventType,log));
+		{
+			AnalyzeResult result= new AnalyzeResult(eventType, NONSENSE);
+			try {
+			if(tripContext.getLogService().checkActiveRecords(log.getTripId(), log.getVehicleId()))
+			{
+				result= new AnalyzeResult(eventType, SOMETHING);
+			}
+			}
+			catch(Exception e)
+			{
+				e.printStackTrace();
+			}
+			
+			log.getAnalyzeResult().put(eventType, result);
+			
+		
+			
+		}
+			
 			break;
 		default:
 			break;
@@ -54,61 +72,7 @@ public class NoDataAnalyzer extends Analyzer {
 		}
 	}
 
-	public AnalyzeResult analyze(EventType eventType, Log log) throws Exception {
-		
-		
-		System.out.println("In no data analyzer");
-		System.out.println(log.getLat());
-		System.out.println(log.getDateModified());
-
-		if (log != null && (log.getLat()) == null || log.getLat().isEmpty() ) {
-
-			Date d = log.getDateModified();
-
-			if (isWhitinOneHOur(d)) {
-				
-				System.out.println(isWhitinOneHOur(d));
-				System.out.println("In no data analyzer if block");
-				
-				return new AnalyzeResult(eventType, NONSENSE);
-			}
-			else {
-				
-				System.out.println("In no data analyzer else block");
-				
-				return new AnalyzeResult(eventType, SOMETHING);
-			}
-		}
-
-		return new AnalyzeResult(eventType, NONSENSE);
-
-	}
-		 
 	
-	
-	
-	public static boolean isWhitinOneHOur(Date date) throws Exception {
-		Date now = new Date();
-		long oneHour = 1000 * 60 * 60;
-		
-		System.out.println("In no data analyzer isWhitinOneHOur oneHour :"+oneHour);
-		
-		System.out.println("In no data analyzer isWhitinOneHOur date.getTime() :"+ date.getTime());
-		
-		System.out.println("In no data analyzer isWhitinOneHOur date.getTime() :"+ now.getTime());
-		
-	 
-		
-		 
-		System.out.println((now.getTime() + oneHour) >= date.getTime());
-		System.out.println((now.getTime() - oneHour) <= date.getTime());
-		
-		if ((now.getTime() + oneHour) >= date.getTime() && (now.getTime() - oneHour) <= date.getTime()) {
-			return true;
-		} else {
-			return false;
-		}
-	}
 	
 
 }

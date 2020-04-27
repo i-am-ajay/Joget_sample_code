@@ -94,7 +94,7 @@ public class LogDeviseProcess {
         LogUtil.info(TAG, "PROCESS LOG 4 TRIP. Id: " + trip.getId());
 
         VehicleProcessData vehicleProcessData = ghtLogProcessing.process(trip);
-        Analyzer.analyze(vehicleProcessData,geofenceService);
+        Analyzer.analyze(vehicleProcessData,geofenceService,logService);
         saveLog(vehicleProcessData);
         updateTripLastPosition(vehicleProcessData, trip);
 

@@ -143,7 +143,8 @@ public abstract class AbstractDao<T> implements Dao<T> {
         Query query = sessionFactory.getCurrentSession().createQuery(strQuery);
         AParam.process(query, params);
         query.setMaxResults(1);
-    
+        
+        
         T res= (T) query.uniqueResult();
 
         return res;

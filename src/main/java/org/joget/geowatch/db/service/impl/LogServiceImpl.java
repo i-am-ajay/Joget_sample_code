@@ -209,6 +209,41 @@ public class LogServiceImpl implements LogService {
     }
 
     @Override
+    public boolean checkActiveRecords(String tripId,String vehicleId) {
+        Session session = null;
+        Transaction transaction = null;
+        try {
+            session = sessionFactory.getCurrentSession();
+            transaction = session.beginTransaction();
+            Date date=new Date(new Date().getTime()-(60l*60l*1000l));
+            Log res = logDao.findSingle(
+                    "SELECT e FROM " + Log.class.getSimpleName() + " e " +
+                            "WHERE e.tripId = :tripId and "
+                            + "e.date > :date and e.vehicleId =:vehicleId "
+                            + "AND e.lat IS NOT NULL "
+                            + "AND e.lng IS NOT NULL ",
+                    new AbstractDao.Order[]{new AbstractDao.Order("e.date", DESC)},
+                    new AbstractDao.StrParam("tripId", tripId),
+                    new AbstractDao.StrParam("vehicleId", vehicleId)
+                    ,new AbstractDao.DateParam("date", date));
+
+            transaction.commit();
+            transaction = null;
+            System.out.println("RESURCE IS FOUND "+res +" DATE "+date+" TRIP ID "+tripId+" vehicle "+vehicleId);
+            return res==null;
+        } 
+        catch(Exception e)
+        {
+        	e.printStackTrace();
+        } 
+        finally {
+            if (transaction != null && !transaction.wasCommitted()) transaction.rollback();
+            if (session != null && session.isOpen()) session.close();
+        }
+       
+        return false;
+    }
+    @Override
     public List<LogJson> list(String tripId, Date date, User user, Integer offset, Integer limit) throws Exception {
         Session session = null;
         Transaction transaction = null;

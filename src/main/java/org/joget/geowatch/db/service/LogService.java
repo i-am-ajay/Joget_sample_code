@@ -24,6 +24,8 @@ public interface LogService {
     List<LogJson> list(String tripId, Date date, User user, Integer offset, Integer limit) throws Exception;
 
     LogJson get(String idLog, User currentUser) throws Exception;
+    
+    boolean checkActiveRecords(String tripId,String vehicleId);
 
     VehicleProcessData updateLastTimeLogReqAndLog(VehicleProcessData vehicleProcessData) throws Exception;
 }
