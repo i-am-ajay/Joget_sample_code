@@ -15,7 +15,11 @@ public class WayPointInReq {
 
     private Double lat;
     private Double lng;
+   // private Long radius;
+    
+    //new
     private Double radius;
+    
     private String polygonHash;
 
     private Integer duration;
@@ -125,6 +129,12 @@ public class WayPointInReq {
         this.polygonHash = polygonHash;
     }
 
+	/*
+	 * public Long getRadius() { return radius; }
+	 * 
+	 * public void setRadius(Long radius) { this.radius = radius; }
+	 */
+
     public Double getRadius() {
         return radius;
     }
@@ -132,7 +142,8 @@ public class WayPointInReq {
     public void setRadius(Double radius) {
         this.radius = radius;
     }
-
+    
+    
     public NotifyType getEndpointNotifyType() {
         return endpointNotifyType;
     }

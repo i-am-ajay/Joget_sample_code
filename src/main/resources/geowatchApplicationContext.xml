@@ -218,7 +218,6 @@
         <constructor-arg ref="notifyService"/>
         <constructor-arg ref="podProcess"/>
         <constructor-arg ref="geofenceService"/>
-        
     </bean>
 
     <bean id="logHandler" class="org.joget.geowatch.ght.processing.LogHandler"/>

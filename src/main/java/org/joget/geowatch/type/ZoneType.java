@@ -12,5 +12,4 @@ public enum ZoneType {
     ALERT_ZONE,
     PARKING_ZONE,
     FERRY_PORT_ZONE,
-    BLACK_LISTED_ZONE
 }

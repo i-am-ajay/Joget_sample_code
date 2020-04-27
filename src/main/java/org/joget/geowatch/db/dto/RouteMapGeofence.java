@@ -235,6 +235,12 @@ public class RouteMapGeofence implements Serializable {
         this.polygonHash = polygonHash;
     }
 
+	/*
+	 * public Long getRadius() { return radius; }
+	 * 
+	 * public void setRadius(Long radius) { this.radius = radius; }
+	 */
+
     public Double getRadius() {
         return radius;
     }
@@ -242,7 +248,7 @@ public class RouteMapGeofence implements Serializable {
     public void setRadius(Double radius) {
         this.radius = radius;
     }
-
+    
     public String getDescription() {
         return description;
     }

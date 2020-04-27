@@ -37,6 +37,8 @@ public class NotifyOutResp {
 
     private Location location;
     private String note;
+    //new data
+    private String snoozeduration;
     private String handler;
     private String handleDate;
     private boolean editable;
@@ -168,6 +170,16 @@ public class NotifyOutResp {
     public void setEditable(boolean editable) {
         this.editable = editable;
     }
+    
+    //new code 
+    
+    public String getSnoozeduration() {
+  		return snoozeduration;
+  	}
+
+  	public void setSnoozeduration(String snoozeduration) {
+  		this.snoozeduration = snoozeduration;
+  	}
 
     public static NotifyOutResp[] update(NotifyOutResp[] items, Notify[] notifies, User user) throws Exception {
         if (items == null) return items;
@@ -181,7 +193,9 @@ public class NotifyOutResp {
         return items;
     }
 
-    public static NotifyOutResp update(NotifyOutResp item, Notify notify, User user) throws Exception {
+  
+
+	public static NotifyOutResp update(NotifyOutResp item, Notify notify, User user) throws Exception {
         if (item == null) return item;
         if (notify == null) return item;
         if (notify.getEvent1() == null) return item;
@@ -195,6 +209,10 @@ public class NotifyOutResp {
         item.description = notify.getDescription();
         item.note = notify.getNote();
         item.handler = notify.getHandler();
+        
+        //new code
+        
+        item.snoozeduration =notify.getSnoozeduration();
 
         item.date = getUiShortStrDate(notify.getDate(), user);
         item.handleDate = getUiShortStrDate(notify.getHandleDate(), user);

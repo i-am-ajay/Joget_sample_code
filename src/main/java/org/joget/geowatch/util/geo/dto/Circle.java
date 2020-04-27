@@ -38,14 +38,14 @@ public class Circle extends Geo {
                         pow(sin(toRadians((lng1 - lng2) / 2)), 2))) * 6378245;
 
         try {
-        double rt = r + tolerance;
-        return nr < rt;
-        }
-        catch (Exception e) {
-			// TODO: handle exception
-        	System.out.println("Point .."+p.toUrlValue() +" point 2"+point.toUrlValue() +" radious "+r);
-		}
-       
-        return false;
+            double rt = r + tolerance;
+            return nr < rt;
+            }
+            catch (Exception e) {
+    			// TODO: handle exception
+            	System.out.println("Point .."+p.toUrlValue() +" point 2"+point.toUrlValue() +" radious "+r);
+    		}
+           
+            return false;
     }
 }

@@ -17,7 +17,10 @@ public class WayPointInnerEntity {
     protected Double lat;
     protected Double lng;
     protected Integer number;
+  //  protected Long radius;
+  // new  
     protected Double radius;
+    
     protected String polygonHash;
 
     protected Integer duration;
@@ -88,6 +91,14 @@ public class WayPointInnerEntity {
         this.number = number;
     }
 
+	/*
+	 * public Long getRadius() { return radius; }
+	 * 
+	 * public void setRadius(Long radius) { this.radius = radius; }
+	 */
+    
+    //new
+    
     public Double getRadius() {
         return radius;
     }
@@ -199,9 +210,10 @@ public class WayPointInnerEntity {
         item.lat = wayPointInReq.getLat();
         item.lng = wayPointInReq.getLng();
         item.number = number;
+        
         item.radius = wayPointInReq.getRadius();
+ 
         item.polygonHash = wayPointInReq.getPolygonHash();
-
         item.duration = wayPointInReq.getDuration();
         item.timeWindowBegin = wayPointInReq.getTimeWindowBegin();
         item.timeWindowEnd = wayPointInReq.getTimeWindowEnd();

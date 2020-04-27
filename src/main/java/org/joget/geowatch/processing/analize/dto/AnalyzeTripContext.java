@@ -1,19 +1,16 @@
 package org.joget.geowatch.processing.analize.dto;
 
-import org.apache.commons.lang3.StringUtils;
 import org.joget.commons.util.LogUtil;
-import org.joget.geowatch.db.dto.Geofence;
 import org.joget.geowatch.db.dto.Trip;
 import org.joget.geowatch.db.dto.inner.WayPointInnerEntity;
-import org.joget.geowatch.db.service.GeofenceService;
 import org.joget.geowatch.processing.analize.impl.ExGeo;
-import org.joget.geowatch.type.ZoneType;
 import org.joget.geowatch.util.geo.dto.Route;
-import org.jsoup.select.Evaluator.IsEmpty;
+import org.joget.geowatch.db.dto.Geofence;
+import org.apache.commons.lang3.StringUtils;
+import org.joget.geowatch.type.ZoneType;
 
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.Iterator;
 import java.util.List;
 
 import static org.joget.geowatch.type.WayPointType.WAY_POINT;
@@ -32,9 +29,7 @@ public class AnalyzeTripContext {
     protected List<Geofence> alertzones;
     protected List<ExGeo> alertzonegeos;
 
- 
-
-	public Route getRoute() {
+    public Route getRoute() {
         return route;
     }
 
@@ -66,19 +61,8 @@ public class AnalyzeTripContext {
         this.geoList = geoList;
     }
     
-    public void setBlackListed(List<Geofence> blackListed) {
-    	
-    	
-		this.blackListed = blackListed;
-	}
     
-   
-
-    public List<Geofence> getBlackListed() {
-		return blackListed;
-	}
-    
-    public List<ExGeo> getBlackListedGeo() {
+ public List<ExGeo> getBlackListedGeo() {
     	
     	if(this.blackListedGeo==null)
     	{
@@ -197,9 +181,8 @@ public class AnalyzeTripContext {
  		System.out.println(alertzonegeos);
  		return alertzonegeos;
  	}
-    
 
-	public static AnalyzeTripContext getInstance(Trip trip) throws Exception {
+    public static AnalyzeTripContext getInstance(Trip trip) throws Exception {
         AnalyzeTripContext item = new AnalyzeTripContext();
         item.route = new Route(trip.getImageRouteMap().getPolylineHash());
         item.startDateTime = getJogetDate(trip.getStartDateTime());

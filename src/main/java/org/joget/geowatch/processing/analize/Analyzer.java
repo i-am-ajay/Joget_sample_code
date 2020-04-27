@@ -3,7 +3,6 @@ package org.joget.geowatch.processing.analize;
 import org.joget.commons.util.LogUtil;
 import org.joget.geowatch.db.dto.Log;
 import org.joget.geowatch.db.dto.Trip;
-import org.joget.geowatch.db.service.GeofenceService;
 import org.joget.geowatch.processing.analize.dto.AnalyzeTripContext;
 import org.joget.geowatch.processing.analize.impl.DoorSensorAnalizer;
 import org.joget.geowatch.processing.analize.impl.GeofenceAnalyzer;
@@ -12,6 +11,8 @@ import org.joget.geowatch.processing.analize.impl.RouteAnalyzer;
 import org.joget.geowatch.processing.dto.LogData;
 import org.joget.geowatch.processing.dto.VehicleProcessData;
 import org.joget.geowatch.type.EventType;
+
+import org.joget.geowatch.processing.analize.impl.NoDataAnalyzer;
 
 import java.util.HashMap;
 import java.util.List;
@@ -26,12 +27,12 @@ import static org.joget.geowatch.type.EventType.GEOFENCE_FINISH;
 import static org.joget.geowatch.type.EventType.GEOFENCE_START;
 import static org.joget.geowatch.type.EventType.GHT_NET;
 import static org.joget.geowatch.type.EventType.POD_SUBMIT;
+import static org.joget.geowatch.type.EventType.ROUTE;
 import static org.joget.geowatch.type.EventType.*;
+import static org.joget.geowatch.type.EventType.NO_DATA;
 
 public abstract class Analyzer {
     private static final String TAG = Analyzer.class.getSimpleName();
-    
-    
 
     protected static final Map<EventType, Analyzer> ANALYZES = new HashMap<>();
 
@@ -46,19 +47,21 @@ public abstract class Analyzer {
         ANALYZES.put(DOOR3, new DoorSensorAnalizer());
         ANALYZES.put(DOOR4, new DoorSensorAnalizer());
         ANALYZES.put(GHT_NET, new GhtNetResultAnalizer());
+        
         ANALYZES.put(STOPPED_UNKNOWN_LOCATION, new GeofenceAnalyzer());
         ANALYZES.put(STOPPED_BLACKLIST_LOCATION, new GeofenceAnalyzer());
         ANALYZES.put(STOPPED_REDZONE_LOCATION, new GeofenceAnalyzer());
+        ANALYZES.put(NO_DATA, new NoDataAnalyzer());
+        
+        
         
     }
 
-    public static void analyze(VehicleProcessData vehicleProcessData,GeofenceService geofenceService) throws Exception {
-    	
+    public static void analyze(VehicleProcessData vehicleProcessData) throws Exception {
+
         Trip trip = vehicleProcessData.getTrip();
         AnalyzeTripContext tripContext = getTripContext(trip);
-        
-        tripContext.setBlackListed(geofenceService.listgeotype("BLACKLIST_ZONE"));
-        tripContext.setAlertzones(geofenceService.listgeotype("ALERT_ZONE"));
+
         for (LogData logDate : vehicleProcessData.getNewLogDataArr()) {
             try {
                 if (logDate != null) analyze(tripContext, logDate);

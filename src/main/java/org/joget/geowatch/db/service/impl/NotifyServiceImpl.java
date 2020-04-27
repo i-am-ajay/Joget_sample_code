@@ -225,6 +225,7 @@ public class NotifyServiceImpl implements NotifyService {
             Notify notify = notifyDao.findById(notifyOutResp.getId());
 
             notify.setNote(notifyOutResp.getNote());
+            notify.setSnoozeduration(notifyOutResp.getSnoozeduration());
 
             Date date = new Date();
             notify.setDateModified(date);

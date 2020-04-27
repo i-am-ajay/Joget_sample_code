@@ -8,7 +8,8 @@ package org.joget.geowatch.type;
 public enum NotifyType implements ILabel{
     NOTHING("Nothing"),
     NOTICE("Notice"),
-    ALERT("Alert");
+    ALERT("Alert"),
+    SNOOZE("Snooze");
 
     private String label;       // fixme: Chenge to labelId for multi language supporting
 

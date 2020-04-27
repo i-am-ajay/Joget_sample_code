@@ -105,6 +105,7 @@ D:\New GGL Workspace\geowatch_plugin\src\main\java\org\joget\geowatch\api\dto\ty
 D:\New GGL Workspace\geowatch_plugin\src\main\java\org\joget\geowatch\db\dto\converter\VehicleInnerEntityConverter.java
 D:\New GGL Workspace\geowatch_plugin\src\main\java\org\joget\geowatch\db\dao\impl\DateDao.java
 D:\New GGL Workspace\geowatch_plugin\src\main\java\org\joget\geowatch\db\service\GhtVehicleService.java
+D:\New GGL Workspace\geowatch_plugin\src\main\java\org\joget\geowatch\processing\analize\impl\NoDataAnalyzer.java
 D:\New GGL Workspace\geowatch_plugin\src\main\java\org\joget\geowatch\api\controller\impl\NotifyController.java
 D:\New GGL Workspace\geowatch_plugin\src\main\java\org\joget\geowatch\app\Main.java
 D:\New GGL Workspace\geowatch_plugin\src\main\java\org\joget\geowatch\ght\db\dto\type\DoorStatus.java

@@ -2,7 +2,6 @@ package org.joget.geowatch.db.dto;
 
 import org.hibernate.annotations.GenericGenerator;
 import org.hibernate.annotations.Type;
-import org.joget.geowatch.UiString;
 import org.joget.geowatch.api.dto.out.resp.NotifyOutResp;
 import org.joget.geowatch.db.dto.inner.GhtVehicleInnerEntity;
 import org.joget.geowatch.db.dto.inner.VehicleInnerEntity;
@@ -36,6 +35,10 @@ import static org.joget.geowatch.UiString.ROUTE_ISSUE;
 import static org.joget.geowatch.UiString.ROUTE_RESOLVED;
 import static org.joget.geowatch.UiString.WP_ENTERED;
 import static org.joget.geowatch.UiString.WP_LEFT;
+import static org.joget.geowatch.UiString.UNKNOWN_LOCATION_ISSUE;
+import static org.joget.geowatch.UiString.NO_DATA_ISSUE;
+import static org.joget.geowatch.UiString.BLACKLISTED_ZONE_ISSUE;
+import static org.joget.geowatch.UiString.RED_ZONE_ISSUE;
 import static org.joget.geowatch.db.dto.type.NotifyResolveStatusType.NEW;
 import static org.joget.geowatch.type.EventSubType.NONSENSE;
 import static org.joget.geowatch.type.EventSubType.SOMETHING;
@@ -127,8 +130,24 @@ public class Notify implements Serializable {
     @Column(name = "c_note")
     @Type(type = "text")
     private String note;
+    
+   //new column
+    
+    @Column(name = "c_snoozeduration")
+    @Type(type = "text")
+    private String snoozeduration;
+    
+    
 
-    @Transient
+    public String getSnoozeduration() {
+		return snoozeduration;
+	}
+
+	public void setSnoozeduration(String snoozeduration) {
+		this.snoozeduration = snoozeduration;
+	}
+
+	@Transient
     protected Trip trip;
 
     @Column(name = "c_tripId", updatable = false)
@@ -164,6 +183,9 @@ public class Notify implements Serializable {
     @Column(name = "c_duration")
     @Type(type = "long")
     private Long duration;
+    
+    
+   
 
     public String getId() {
         return id;
@@ -373,7 +395,8 @@ public class Notify implements Serializable {
         item.event1Id = event.getId();
         item.log1 = event.getLog();
         item.log1Id = event.getLog().getId();
-
+        
+     
         item.event2 = null;
         item.event2Id = null;
         item.log2 = null;
@@ -419,7 +442,8 @@ public class Notify implements Serializable {
 
         EventType et = event.getEventType();
         EventSubType st = event.getEventSubType();
-
+        
+   
         if (SOMETHING != st && NONSENSE != st)
             throw new IllegalArgumentException("Can't resolve eventSubType: " + event.getEventSubType());
 
@@ -459,11 +483,18 @@ public class Notify implements Serializable {
             case POD_SUBMIT:
                 if (SOMETHING == st) return ALERT;
                 if (NONSENSE == st) return NOTHING;
+                
             case STOPPED_UNKNOWN_LOCATION:
             case STOPPED_BLACKLIST_LOCATION:
             case STOPPED_REDZONE_LOCATION:
                 if (SOMETHING == st) return ALERT;
+         
+                
+            case NO_DATA:
+                if (SOMETHING == st) return ALERT;
                 if (NONSENSE == st) return NOTHING;
+                
+        
             default:
                 throw new IllegalArgumentException("Can't resolve eventType: " + event.getEventType());
         }
@@ -522,15 +553,25 @@ public class Notify implements Serializable {
             case POD_SUBMIT:
                 if (SOMETHING == st) return String.format(POD_ISSUE);
                 if (NONSENSE == st) return "";
+                
+                
             case STOPPED_UNKNOWN_LOCATION:
-                if (SOMETHING == st) return String.format(UiString.UNKNOWN_LOCATION_ISSUE);
+                if (SOMETHING == st) return String.format(UNKNOWN_LOCATION_ISSUE);
                 if (NONSENSE == st) return "";
+            
             case STOPPED_BLACKLIST_LOCATION:
-                if (SOMETHING == st) return String.format(UiString.BLACKLISTED_ZONE_ISSUE);
+                if (SOMETHING == st) return String.format(BLACKLISTED_ZONE_ISSUE);
                 if (NONSENSE == st) return "";
+                
             case STOPPED_REDZONE_LOCATION:
-                if (SOMETHING == st) return String.format(UiString.RED_ZONE_ISSUE);
+                if (SOMETHING == st) return String.format(RED_ZONE_ISSUE);
                 if (NONSENSE == st) return "";
+                
+            case  NO_DATA:
+                if (SOMETHING == st) return String.format(NO_DATA_ISSUE);
+                if (NONSENSE == st) return "";
+                
+          
             default:
                 throw new IllegalArgumentException("Can't resolve eventSubType: " + event.getEventSubType());
         }

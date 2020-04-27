@@ -2,13 +2,11 @@ package org.joget.geowatch.processing.analize.impl;
 
 import com.google.maps.model.LatLng;
 import org.joget.commons.util.LogUtil;
-import org.joget.geowatch.db.dto.Geofence;
 import org.joget.geowatch.db.dto.Log;
 import org.joget.geowatch.processing.analize.Analyzer;
 import org.joget.geowatch.processing.analize.dto.AnalyzeTripContext;
 import org.joget.geowatch.processing.analize.result.AnalyzeResult;
 import org.joget.geowatch.processing.dto.LogData;
-import org.joget.geowatch.type.EventSubType;
 import org.joget.geowatch.type.EventType;
 
 import java.util.List;
@@ -50,6 +48,7 @@ public class GeofenceAnalyzer extends Analyzer {
                 log.getAnalyzeResult().put(eventType, analyze(eventType,
                         tripContext.getGeoList().get(tripContext.getGeoList().size() - 1), log));
                 break;
+                
             case STOPPED_UNKNOWN_LOCATION:
             {
             	Double speed=0.0;
@@ -74,8 +73,6 @@ public class GeofenceAnalyzer extends Analyzer {
             		 LatLng point = new LatLng(Double.parseDouble(log.getLat()), Double.parseDouble(log.getLng()));
             		  log.getAnalyzeResult().put(eventType, analyze(eventType,
                               tripContext, point));
-                 
-            		
             	}
             } 
             break;
@@ -126,6 +123,7 @@ public class GeofenceAnalyzer extends Analyzer {
             	
             	}
             }   break;
+            
             default:
                 for (ExGeo geo : tripContext.getGeoList()) {
                     try {
@@ -148,7 +146,7 @@ public class GeofenceAnalyzer extends Analyzer {
         return new AnalyzeResult(eventType, NONSENSE, geo.getWp());
     }
     
-   
+    
     private AnalyzeResult analyze(EventType eventType, AnalyzeTripContext tripContext, LatLng point) {
 
         for (ExGeo geo : tripContext.getGeoList()) {
@@ -161,7 +159,8 @@ public class GeofenceAnalyzer extends Analyzer {
 
         return new AnalyzeResult(eventType, SOMETHING);
     }
-
+    
+    
     private AnalyzeResult analyze_zones(EventType eventType, List<ExGeo> geos, LatLng point) {
 
         for (ExGeo geo : geos) {
@@ -174,5 +173,6 @@ public class GeofenceAnalyzer extends Analyzer {
 
         return new AnalyzeResult(eventType, NONSENSE);
     }
+
 
 }

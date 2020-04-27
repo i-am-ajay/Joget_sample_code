@@ -30,7 +30,7 @@ public class UiString {
     //new alerts
     
     
-    //9.STOPPED AT UNKNOWN LOCATION 
+   //9.STOPPED AT UNKNOWN LOCATION 
     
     public static final String  UNKNOWN_LOCATION_ISSUE = "STOPPED AT UNKNOWN LOCATION.";
     
@@ -65,8 +65,5 @@ public class UiString {
 
 //    5. The POD has been submitted.
     public static final String POD_RESOLVED = "The POD has been submitted.";
-
-    
-    public static final String STOP_UNKNOW_STRING = "STOPPED AT UNKNOWN LOCATION";
 
 }

@@ -18,9 +18,11 @@ public enum EventType implements ILabel{
     DELAY_START("Delay start issue"),
     DELAY_FINISH("Delay finish issue"),
     POD_SUBMIT("Pod issue"),
-	STOPPED_UNKNOWN_LOCATION("STOPPED UNKNOWN LOCATION"),
+    NO_DATA("No Data issue"),
+    STOPPED_UNKNOWN_LOCATION("STOPPED UNKNOWN LOCATION"),
 	STOPPED_BLACKLIST_LOCATION("STOPPED BLACKLIST LOCATION"),
-	STOPPED_REDZONE_LOCATION("STOPPED REDZONE LOCATION");
+	STOPPED_REDZONE_LOCATION("STOPPED REDZONE LOCATION"),
+	DOOR_OPEN("DOOR OPEN");
 
     private String label;       // fixme: Chenge to labelId for multi language supporting
 

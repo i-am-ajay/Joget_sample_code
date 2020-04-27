@@ -126,6 +126,13 @@ public class WayPointOutResp {
         this.polygonHash = polygonHash;
     }
 
+	/*
+	 * public Long getRadius() { return radius; }
+	 * 
+	 * public void setRadius(Long radius) { this.radius = radius; }
+	 */
+    
+    
     public Double getRadius() {
         return radius;
     }
@@ -133,7 +140,7 @@ public class WayPointOutResp {
     public void setRadius(Double radius) {
         this.radius = radius;
     }
-
+    
     public NotifyType getEndpointNotifyType() {
         return endpointNotifyType;
     }
