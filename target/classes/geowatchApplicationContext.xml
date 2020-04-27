@@ -1,0 +1,242 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+       http://www.springframework.org/schema/beans/spring-beans-2.5.xsd">
+
+    <bean id="geowatchSessionFactory" class="org.springframework.orm.hibernate4.LocalSessionFactoryBean">
+        <property name="dataSource" ref="setupDataSource"/>
+        <property name="annotatedClasses">
+            <list>
+                <value>org.joget.geowatch.db.dto.Department</value>
+                <value>org.joget.geowatch.db.dto.Event</value>
+                <value>org.joget.geowatch.db.dto.Geofence</value>
+                <value>org.joget.geowatch.db.dto.GhtVehicle</value>
+                <value>org.joget.geowatch.db.dto.Log</value>
+                <value>org.joget.geowatch.db.dto.Notify</value>
+                <value>org.joget.geowatch.db.dto.Property</value>
+                <value>org.joget.geowatch.db.dto.Route</value>
+                <value>org.joget.geowatch.db.dto.RouteMap</value>
+                <value>org.joget.geowatch.db.dto.TripSnapShot</value>
+                <value>org.joget.geowatch.db.dto.Trip</value>
+                <value>org.joget.geowatch.db.dto.Vehicle</value>
+            </list>
+        </property>
+        
+        <property name="hibernateProperties">
+            <props>
+            
+                <prop key="hibernate.hbm2ddl.auto">update</prop>
+                <prop key="hibernate.show_sql">false</prop>
+                <prop key="hibernate.format_sql">false</prop>
+                <prop key="hibernate.current_session_context_class">thread</prop>
+            </props>
+        </property>
+    </bean>
+
+    <!--Plugin Geowatch Incoming process-->
+    <bean id="routeInProcess" class="org.joget.geowatch.api.process.in.RouteInProcess">
+        <constructor-arg ref="routeMapService"/>
+    </bean>
+
+    <bean id="tripInProcess" class="org.joget.geowatch.api.process.in.TripInProcess">
+        <constructor-arg ref="tripService"/>
+        <constructor-arg ref="geoDataService"/>
+    </bean>
+
+    <bean id="notifyInProcess" class="org.joget.geowatch.api.process.in.NotifyInProcess">
+        <constructor-arg ref="notifyService"/>
+    </bean>
+
+    <!--Plugin Geowatch Controllers Beans-->
+    <bean id="routeController" class="org.joget.geowatch.api.controller.impl.RouteMapController">
+        <constructor-arg ref="routeInProcess"/>
+        <constructor-arg ref="routeMapService"/>
+    </bean>
+    <bean id="tripController" class="org.joget.geowatch.api.controller.impl.TripController">
+        <constructor-arg ref="tripInProcess"/>
+        <constructor-arg ref="tripService"/>
+    </bean>
+    <bean id="finishedTripController" class="org.joget.geowatch.api.controller.impl.FinishedTripController">
+        <constructor-arg ref="tripInProcess"/>
+        <constructor-arg ref="tripService"/>
+    </bean>
+    <bean id="vehicleController" class="org.joget.geowatch.api.controller.impl.VehicleController">
+        <constructor-arg ref="vehicleService"/>
+        <constructor-arg ref="ghtVehicleService"/>
+    </bean>
+    <bean id="geoDataController" class="org.joget.geowatch.api.controller.impl.GeoDataController">
+        <constructor-arg ref="geoDataService"/>
+    </bean>
+    <bean id="propertyController" class="org.joget.geowatch.api.controller.impl.PropertyController">
+        <constructor-arg ref="propertyService"/>
+    </bean>
+    <bean id="geofenceController" class="org.joget.geowatch.api.controller.impl.GeofenceController">
+        <constructor-arg ref="geofenceService"/>
+    </bean>
+    <bean id="ghtLogController" class="org.joget.geowatch.api.controller.impl.GhtLogController">
+        <constructor-arg ref="logService"/>
+    </bean>
+    <bean id="notifyController" class="org.joget.geowatch.api.controller.impl.NotifyController">
+        <constructor-arg ref="notifyInProcess"/>
+    </bean>
+    <bean id="tripTestController" class="org.joget.geowatch.api.controller.impl.TripTestController">
+        <constructor-arg ref="tripTestService"/>
+    </bean>
+
+    <!--Plugin Geowatch Services Beans-->
+    <bean id="ghtVehicleService" class="org.joget.geowatch.db.service.impl.GhtVehicleServiceImpl">
+        <constructor-arg ref="geowatchSessionFactory"/>
+        <constructor-arg ref="ghtVehicleDao"/>
+        <constructor-arg ref="ghTourService"/>
+    </bean>
+    <bean id="vehicleService" class="org.joget.geowatch.db.service.impl.VehicleServiceImpl">
+        <constructor-arg ref="geowatchSessionFactory"/>
+        <constructor-arg ref="tripDao"/>
+        <constructor-arg ref="logDao"/>
+    </bean>
+    <bean id="tripService" class="org.joget.geowatch.db.service.impl.TripServiceImpl">
+        <constructor-arg ref="geowatchSessionFactory"/>
+        <constructor-arg ref="tripDao"/>
+        <constructor-arg ref="logDao"/>
+        <constructor-arg ref="eventDao"/>
+        <constructor-arg ref="ghtVehicleDao"/>
+        <constructor-arg ref="departmentDao"/>
+        <constructor-arg ref="tripSnapShotDao"/>
+        <constructor-arg ref="ghTourService"/>
+    </bean>
+    <bean id="geoDataService" class="org.joget.geowatch.db.service.impl.GeoDataServiceImpl">
+        <constructor-arg ref="geowatchSessionFactory"/>
+        <constructor-arg ref="logDao"/>
+        <constructor-arg ref="tripDao"/>
+    </bean>
+    <bean id="routeMapService" class="org.joget.geowatch.db.service.impl.RouteMapServiceImpl">
+        <constructor-arg ref="geowatchSessionFactory"/>
+        <constructor-arg ref="tripDao"/>
+        <constructor-arg ref="routeDao"/>
+        <constructor-arg ref="routeMapDao"/>
+    </bean>
+    <bean id="propertyService" class="org.joget.geowatch.db.service.impl.PropertyServiceImpl">
+        <constructor-arg ref="geowatchSessionFactory"/>
+        <constructor-arg ref="propertyDao"/>
+    </bean>
+    <bean id="geofenceService" class="org.joget.geowatch.db.service.impl.GeofenceServiceImpl">
+        <constructor-arg ref="geowatchSessionFactory"/>
+        <constructor-arg ref="geofenceDao"/>
+        <constructor-arg ref="routeMapGeofenceDao"/>
+    </bean>
+    <bean id="logService" class="org.joget.geowatch.db.service.impl.LogServiceImpl">
+        <constructor-arg ref="geowatchSessionFactory"/>
+        <constructor-arg ref="logDao"/>
+    </bean>
+    <bean id="notifyService" class="org.joget.geowatch.db.service.impl.NotifyServiceImpl">
+        <constructor-arg ref="geowatchSessionFactory"/>
+        <constructor-arg ref="notifyDao"/>
+        <constructor-arg ref="eventDao"/>
+    </bean>
+    <bean id="tripTestService" class="org.joget.geowatch.db.service.impl.TripTestServiceImpl">
+        <constructor-arg ref="geowatchSessionFactory"/>
+        <constructor-arg ref="tripDao"/>
+        <constructor-arg ref="vehicleDao"/>
+        <constructor-arg ref="vehicleDao"/>
+        <constructor-arg ref="logDao"/>
+    </bean>
+
+    <bean id="eventService" class="org.joget.geowatch.db.service.impl.EventServiceImpl">
+        <constructor-arg ref="geowatchSessionFactory"/>
+        <constructor-arg ref="eventDao"/>
+    </bean>
+    <bean id="dateService" class="org.joget.geowatch.db.service.impl.DateServiceImpl">
+        <constructor-arg ref="geowatchSessionFactory"/>
+        <constructor-arg ref="dateDao"/>
+    </bean>
+
+    <!--DAO Beans-->
+    <bean id="ghtVehicleDao" class="org.joget.geowatch.db.dao.impl.GhtVehicleDao">
+        <property name="sessionFactory" ref="geowatchSessionFactory"/>
+    </bean>
+    <bean id="routeMapDao" class="org.joget.geowatch.db.dao.impl.RouteMapDao">
+        <property name="sessionFactory" ref="geowatchSessionFactory"/>
+    </bean>
+    <bean id="tripDao" class="org.joget.geowatch.db.dao.impl.TripDao">
+        <property name="sessionFactory" ref="geowatchSessionFactory"/>
+    </bean>
+    <bean id="logDao" class="org.joget.geowatch.db.dao.impl.LogDao">
+        <property name="sessionFactory" ref="geowatchSessionFactory"/>
+    </bean>
+    <bean id="eventDao" class="org.joget.geowatch.db.dao.impl.EventDao">
+        <property name="sessionFactory" ref="geowatchSessionFactory"/>
+    </bean>
+    <bean id="departmentDao" class="org.joget.geowatch.db.dao.impl.DepartmentDao">
+        <property name="sessionFactory" ref="geowatchSessionFactory"/>
+    </bean>
+    <bean id="dateDao" class="org.joget.geowatch.db.dao.impl.DateDao">
+        <property name="sessionFactory" ref="geowatchSessionFactory"/>
+    </bean>
+    <bean id="vehicleDao" class="org.joget.geowatch.db.dao.impl.VehicleDao">
+        <property name="sessionFactory" ref="geowatchSessionFactory"/>
+    </bean>
+    <bean id="geofenceDao" class="org.joget.geowatch.db.dao.impl.GeofenceDao">
+        <property name="sessionFactory" ref="geowatchSessionFactory"/>
+    </bean>
+    <bean id="routeMapGeofenceDao" class="org.joget.geowatch.db.dao.impl.RouteMapGeofenceDao">
+        <property name="sessionFactory" ref="geowatchSessionFactory"/>
+    </bean>
+    <bean id="propertyDao" class="org.joget.geowatch.db.dao.impl.PropertyDao">
+        <property name="sessionFactory" ref="geowatchSessionFactory"/>
+    </bean>
+    <bean id="routeDao" class="org.joget.geowatch.db.dao.impl.RouteDao">
+        <property name="sessionFactory" ref="geowatchSessionFactory"/>
+    </bean>
+    <bean id="notifyDao" class="org.joget.geowatch.db.dao.impl.NotifyDao">
+        <property name="sessionFactory" ref="geowatchSessionFactory"/>
+    </bean>
+    <bean id="tripSnapShotDao" class="org.joget.geowatch.db.dao.impl.TripSnapShotDao">
+        <property name="sessionFactory" ref="geowatchSessionFactory"/>
+    </bean>
+
+    <!--GhTrack Service Beans-->
+    <bean id="ghVehicleService" class="org.joget.geowatch.ghtrack.service.impl.GhtVehicleServiceImpl">
+        <constructor-arg ref="logService"/>
+        <constructor-arg ref="tripDao"/>
+        <constructor-arg ref="geowatchSessionFactory"/>
+    </bean>
+    <bean id="ghTourService" class="org.joget.geowatch.ghtrack.service.impl.GhTourServiceImpl"/>
+
+    <!--GHT Net Service-->
+    <bean id="GhtVehicleNetService" class="org.joget.geowatch.ght.net.service.impl.GhtVehicleNetServiceImpl">
+    </bean>
+
+    <!--Processing -->
+    <bean id="logDeviseProcess" class="org.joget.geowatch.processing.LogDeviseProcess">
+        <constructor-arg ref="tripService"/>
+        <constructor-arg ref="logService"/>
+        <constructor-arg ref="ghtLogProcessing"/>
+        <constructor-arg ref="eventProcess"/>
+        <constructor-arg ref="eventService"/>
+        <constructor-arg ref="notifyProcess"/>
+        <constructor-arg ref="notifyService"/>
+        <constructor-arg ref="podProcess"/>
+        <constructor-arg ref="geofenceService"/>
+        
+    </bean>
+
+    <bean id="logHandler" class="org.joget.geowatch.ght.processing.LogHandler"/>
+
+    <bean id="eventProcess" class="org.joget.geowatch.processing.EventProcess">
+        <constructor-arg ref="eventService"/>
+    </bean>
+    <bean id="notifyProcess" class="org.joget.geowatch.processing.NotifyProcess">
+        <constructor-arg ref="notifyService"/>
+    </bean>
+    <bean id="ghtLogProcessing" class="org.joget.geowatch.ght.processing.GhtLogProcessing">
+        <constructor-arg ref="logService"/>
+        <constructor-arg ref="GhtVehicleNetService"/>
+        <constructor-arg ref="logHandler"/>
+    </bean>
+
+    <bean id="podProcess" class="org.joget.geowatch.processing.PodProcess">
+        <constructor-arg ref="tripService"/>
+    </bean>
+
+</beans>
