@@ -38,7 +38,7 @@ import static org.joget.geowatch.UiString.WP_LEFT;
 import static org.joget.geowatch.UiString.UNKNOWN_LOCATION_ISSUE;
 import static org.joget.geowatch.UiString.NO_DATA_ISSUE;
 import static org.joget.geowatch.UiString.BLACKLISTED_ZONE_ISSUE;
-import static org.joget.geowatch.UiString.RED_ZONE_ISSUE;
+import static org.joget.geowatch.UiString.*;
 import static org.joget.geowatch.db.dto.type.NotifyResolveStatusType.NEW;
 import static org.joget.geowatch.type.EventSubType.NONSENSE;
 import static org.joget.geowatch.type.EventSubType.SOMETHING;
@@ -511,6 +511,23 @@ public class Notify implements Serializable {
                 if (NONSENSE == st) return "";
 
             case DOOR1:
+            	 if (SOMETHING == st) return String.format(DOOR1_OPEN_ISSUE,event.getLog().getVehicle().getType(),
+                         event.getLog().getGhtVehicle().getId());
+                 if (NONSENSE == st) return "";
+            case DOOR2:
+            	 if (SOMETHING == st) return String.format(DOOR2_OPEN_ISSUE,event.getLog().getVehicle().getType(),
+                         event.getLog().getGhtVehicle().getId());
+                 if (NONSENSE == st) return "";
+            case DOOR3:
+            	 if (SOMETHING == st) return String.format(DOOR3_OPEN_ISSUE,event.getLog().getVehicle().getType(),
+                         event.getLog().getGhtVehicle().getId());
+                 if (NONSENSE == st) return "";
+            case DOOR4:
+            	 if (SOMETHING == st) return String.format(DOOR4_OPEN_ISSUE,event.getLog().getVehicle().getType(),
+                         event.getLog().getGhtVehicle().getId());
+                 if (NONSENSE == st) return "";
+            	
+           /* case DOOR1:
             case DOOR2:
                 if (SOMETHING == st) return String.format(PANIC_ISSUE,
                         event.getLog().getVehicle().getType(),
@@ -523,7 +540,7 @@ public class Notify implements Serializable {
                         event.getLog().getVehicle().getType(),
                         event.getLog().getGhtVehicle().getId());
                 if (NONSENSE == st) return "";
-
+			*/
             case ROUTE:
                 if (SOMETHING == st) return String.format(ROUTE_ISSUE,
                         event.getLog().getGhtVehicle().getId());

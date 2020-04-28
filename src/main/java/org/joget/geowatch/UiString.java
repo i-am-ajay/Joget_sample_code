@@ -43,7 +43,10 @@ public class UiString {
     public static final String RED_ZONE_ISSUE = "STOPPED INSIDE RED ZONE.";
     
     //12.DOOR OPEN ALERT
-    public static final String DOOR_OPEN_ISSUE = "DOOR OPEN ALERT.";
+    public static final String DOOR1_OPEN_ISSUE = "DOOR 1 OPEN ALERT for %s %s.";
+    public static final String DOOR2_OPEN_ISSUE = "DOOR 2 OPEN ALERT for %s %s.";
+    public static final String DOOR3_OPEN_ISSUE = "DOOR 3 OPEN ALERT for %s %s.";
+    public static final String DOOR4_OPEN_ISSUE = "DOOR 4 OPEN ALERT for %s %s.";
     
     
     //13.NO DATA

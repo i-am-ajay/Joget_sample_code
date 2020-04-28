@@ -57,19 +57,19 @@ public class GeofenceAnalyzer extends Analyzer {
 				} catch (Exception e) {
 					// TODO: handle exception
 				}
-            	System.out.println("SPEED=== STOPPED_UNKNOWN_LOCATION"+speed);
+            	//System.out.println("SPEED=== STOPPED_UNKNOWN_LOCATION"+speed);
             	if (isEmpty(log.getLat()) || isEmpty(log.getLng()))
             	{
-            		System.out.println("EMPTY LAT LONG STOPPED_UNKNOWN_LOCATION");
+            		//System.out.println("EMPTY LAT LONG STOPPED_UNKNOWN_LOCATION");
             		log.getAnalyzeResult().put(eventType, new AnalyzeResult(eventType, NONSENSE));
             	}
             	else if (log.getSpeed()==null||speed>1.0)
             	{
-            		System.out.println("SPEED >1  STOPPED_UNKNOWN_LOCATION");
+            		//System.out.println("SPEED >1  STOPPED_UNKNOWN_LOCATION");
             		log.getAnalyzeResult().put(eventType, new AnalyzeResult(eventType, NONSENSE ));
             	}
             	else {                  
-            		System.out.println("CHECKING PATH STOPPED_UNKNOWN_LOCATION");
+            		//System.out.println("CHECKING PATH STOPPED_UNKNOWN_LOCATION");
             		 LatLng point = new LatLng(Double.parseDouble(log.getLat()), Double.parseDouble(log.getLng()));
             		  log.getAnalyzeResult().put(eventType, analyze(eventType,
                               tripContext, point));
@@ -164,7 +164,7 @@ public class GeofenceAnalyzer extends Analyzer {
     private AnalyzeResult analyze_zones(EventType eventType, List<ExGeo> geos, LatLng point) {
 
         for (ExGeo geo : geos) {
-        	System.out.println(" "+eventType.toString() +" ... "+geo.getWp().getLat()+" -- "+geo.getWp().getLng()+" ... "+point.lat+" .."+point.lng);
+        //	System.out.println(" "+eventType.toString() +" ... "+geo.getWp().getLat()+" -- "+geo.getWp().getLng()+" ... "+point.lat+" .."+point.lng);
             if (geo.isWithin(point, ANALYZE_GEOFENCE_TOLERANCE))
                 return new AnalyzeResult(eventType, SOMETHING);
         }
