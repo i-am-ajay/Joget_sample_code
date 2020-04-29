@@ -32,6 +32,7 @@ org\joget\geowatch\db\service\DateService.class
 org\joget\geowatch\db\dto\ImageRouteMap.class
 org\joget\geowatch\api\controller\impl\GhtLogController.class
 org\joget\geowatch\ght\net\dto\tour\Tour.class
+org\joget\geowatch\processing\analize\impl\NotReachedToStartingPointAnalizer$1.class
 org\joget\geowatch\db\service\impl\DateServiceImpl.class
 org\joget\geowatch\processing\analize\Analyzer.class
 org\joget\geowatch\processing\dto\LogData.class

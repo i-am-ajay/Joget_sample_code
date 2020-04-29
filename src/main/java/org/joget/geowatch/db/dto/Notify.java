@@ -449,7 +449,7 @@ public class Notify implements Serializable {
 
         switch (et) {
             case GHT_NET:
-                if (SOMETHING == st) return ALERT;
+                if (SOMETHING == st) return NOTICE;
                 if (NONSENSE == st) return NOTHING;
 
             case DOOR1:
@@ -493,7 +493,9 @@ public class Notify implements Serializable {
             case NO_DATA:
                 if (SOMETHING == st) return ALERT;
                 if (NONSENSE == st) return NOTHING;
-                
+            case DELAY_START_NEW:
+            	 if (SOMETHING == st) return ALERT;
+                 if (NONSENSE == st) return NOTHING;
         
             default:
                 throw new IllegalArgumentException("Can't resolve eventType: " + event.getEventType());
@@ -586,6 +588,9 @@ public class Notify implements Serializable {
                 
             case  NO_DATA:
                 if (SOMETHING == st) return String.format(NO_DATA_ISSUE);
+                if (NONSENSE == st) return "";
+            case DELAY_START_NEW:
+            	if (SOMETHING == st) return String.format(NOT_ARRIVED_TO_STARTING_POINT);
                 if (NONSENSE == st) return "";
                 
           

@@ -56,6 +56,7 @@ D:\New GGL Workspace\geowatch_plugin\src\main\java\org\joget\geowatch\db\service
 D:\New GGL Workspace\geowatch_plugin\src\main\java\org\joget\geowatch\db\service\impl\VehicleServiceImpl.java
 D:\New GGL Workspace\geowatch_plugin\src\main\java\org\joget\geowatch\ght\net\dto\in\resp\log\Trailer.java
 D:\New GGL Workspace\geowatch_plugin\src\main\java\org\joget\geowatch\db\dto\Trip.java
+D:\New GGL Workspace\geowatch_plugin\src\main\java\org\joget\geowatch\processing\analize\impl\NotReachedToStartingPointAnalizer.java
 D:\New GGL Workspace\geowatch_plugin\src\main\java\org\joget\geowatch\processing\service\LogRunnable.java
 D:\New GGL Workspace\geowatch_plugin\src\main\java\org\joget\geowatch\api\controller\impl\GeoDataController.java
 D:\New GGL Workspace\geowatch_plugin\src\main\java\org\joget\geowatch\api\dto\GooglePlaceResponse.java

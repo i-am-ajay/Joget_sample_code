@@ -4,7 +4,8 @@ public class UiString {
 
     //    Alert
     //    1. Issue with tracking device, please check with support team.
-    public static final String GHT_ISSUE = "Issue with tracking device, please check with support team";
+    public static final String GHT_ISSUE = "(Late to Load) Device is not Located at Loading Address" ; 
+    		//"Issue with tracking device, please check with support team";
 
     //    2. Vehicle with licience_plate hasn't been arrived to start waypoint zone in time.
     public static final String DELAY_ISSUE_START_WP = "Vehicle with %s hasn't been arrived to start waypoint zone in time.";
@@ -51,6 +52,9 @@ public class UiString {
     
     //13.NO DATA
     public static final String NO_DATA_ISSUE = "NO DATA.";
+    
+    //14.NO DATA
+    public static final String NOT_ARRIVED_TO_STARTING_POINT = "Device has not arrived at Loading Address.";
     
 
 //    Notifications
