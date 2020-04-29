@@ -4,7 +4,8 @@ public class UiString {
 
     //    Alert
     //    1. Issue with tracking device, please check with support team.
-    public static final String GHT_ISSUE = "Issue with tracking device, please check with support team";
+    public static final String GHT_ISSUE = "(Late to Load) Device is not Located at Loading Address" ; 
+    		//"Issue with tracking device, please check with support team";
 
     //    2. Vehicle with licience_plate hasn't been arrived to start waypoint zone in time.
     public static final String DELAY_ISSUE_START_WP = "Vehicle with %s hasn't been arrived to start waypoint zone in time.";
@@ -43,11 +44,17 @@ public class UiString {
     public static final String RED_ZONE_ISSUE = "STOPPED INSIDE RED ZONE.";
     
     //12.DOOR OPEN ALERT
-    public static final String DOOR_OPEN_ISSUE = "DOOR OPEN ALERT.";
+    public static final String DOOR1_OPEN_ISSUE = "DOOR 1 OPEN ALERT for %s %s.";
+    public static final String DOOR2_OPEN_ISSUE = "DOOR 2 OPEN ALERT for %s %s.";
+    public static final String DOOR3_OPEN_ISSUE = "DOOR 3 OPEN ALERT for %s %s.";
+    public static final String DOOR4_OPEN_ISSUE = "DOOR 4 OPEN ALERT for %s %s.";
     
     
     //13.NO DATA
     public static final String NO_DATA_ISSUE = "NO DATA.";
+    
+    //14.NO DATA
+    public static final String NOT_ARRIVED_TO_STARTING_POINT = "Device has not arrived at Loading Address.";
     
 
 //    Notifications

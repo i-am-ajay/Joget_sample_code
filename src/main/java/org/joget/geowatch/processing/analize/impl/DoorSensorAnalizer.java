@@ -11,10 +11,7 @@ import org.joget.geowatch.type.EventType;
 public class DoorSensorAnalizer extends Analyzer {
     private static final String TAG = DoorSensorAnalizer.class.getSimpleName();
 
-    @Override
-    public void analyze(EventType eventType, AnalyzeTripContext tripContext, LogData logData) throws Exception {
 
-    }
 
     @Override
     public void analyze(EventType eventType, AnalyzeTripContext tripContext, Log log) throws Exception {
@@ -37,9 +34,11 @@ public class DoorSensorAnalizer extends Analyzer {
     }
 
     protected AnalyzeResult analyze(EventType eventType, Boolean doorStatus) {
+    	
+    	//System.out.println("EVENT "+eventType+" state = "+doorStatus);
         if (doorStatus == null)
             return new AnalyzeResult(eventType, EventSubType.UNKNOWN);
-        else if (doorStatus)
+        else if (!doorStatus)
             return new AnalyzeResult(eventType, EventSubType.NONSENSE);
         else
             return new AnalyzeResult(eventType, EventSubType.SOMETHING);
