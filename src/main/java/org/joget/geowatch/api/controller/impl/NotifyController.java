@@ -28,6 +28,8 @@ public class NotifyController extends AbstractController {
     @Override
     public HttpWrap processPost(User user, HttpWrap httpWrap) throws Exception {
         NotifyOutResp notifyOutResp = httpWrap.getBody(NotifyOutResp.class);
+        System.out.println("Snooze duration :");
+        System.out.println(notifyOutResp.getSnoozeduration());
         return notifyInProcess.post(httpWrap, user, notifyOutResp);
     }
 

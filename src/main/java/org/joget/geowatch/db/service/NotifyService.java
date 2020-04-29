@@ -31,5 +31,8 @@ public interface NotifyService {
     void update(Notify notify) throws Exception;
 
     NotifyOutResp update(User user, NotifyOutResp notifyJson) throws Exception;
+    
+    Map<EventType, Notify> getSnoozeNotify(String tripId, String snoozeduration , EventType[] eventTypeArr) throws Exception;
+    
 }
 

@@ -49,10 +49,16 @@ public class NoDataAnalyzer extends Analyzer {
 		{
 			AnalyzeResult result= new AnalyzeResult(eventType, NONSENSE);
 			try {
-			if(tripContext.getLogService().checkActiveRecords(log.getTripId(), log.getVehicleId()))
-			{
+				Date date=new Date(new Date().getTime()-(60l*60l*1000l));
+				//Wait for 60 mins from trip start to get the alert. 
+				if(tripContext.getStartDateTime().after(date))
+				{
+					result= new AnalyzeResult(eventType, NONSENSE);
+				}
+				else if(tripContext.getLogService().checkActiveRecords(log.getTripId(), log.getVehicleId()))
+				{
 				result= new AnalyzeResult(eventType, SOMETHING);
-			}
+				}
 			}
 			catch(Exception e)
 			{
