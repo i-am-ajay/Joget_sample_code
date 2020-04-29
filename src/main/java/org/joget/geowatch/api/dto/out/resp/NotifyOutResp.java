@@ -216,11 +216,12 @@ public class NotifyOutResp {
 
         item.date = getUiShortStrDate(notify.getDate(), user);
         item.handleDate = getUiShortStrDate(notify.getHandleDate(), user);
-
         item.location = Location.update1(new Location(), notify);
-
         item.setNotificationType(notify.getNotifyType());
+        
+       
         item.setStatus(notify.getStatus());
+        
         item.setEventType(notify.getEventType());
         item.setEventSubType(notify.getEventSubType());
 

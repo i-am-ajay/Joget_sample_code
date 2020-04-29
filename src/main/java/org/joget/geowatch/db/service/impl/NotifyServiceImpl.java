@@ -23,6 +23,7 @@ import java.util.Map;
 import static org.apache.commons.lang3.StringUtils.isEmpty;
 import static org.joget.geowatch.db.dao.impl.AbstractDao.OrderType.DESC;
 import static org.joget.geowatch.db.dto.type.NotifyResolveStatusType.CLOSED;
+import static org.joget.geowatch.db.dto.type.NotifyResolveStatusType.NEW;
 import static org.joget.geowatch.util.DateUtil.getUiShortStrDate;
 
 /**
@@ -63,6 +64,39 @@ public class NotifyServiceImpl implements NotifyService {
                         new AbstractDao.StrParam("tripId", tripId),
                         new AbstractDao.StrParam("ghtVehicleId", ghtVehicleId),
                         new AbstractDao.StrParam("eventType", eventType.name()));
+                if (notify != null) map.put(eventType, notify);
+            }
+
+            transaction.commit();
+            transaction = null;
+            return map;
+        } finally {
+            if (transaction != null && !transaction.wasCommitted()) transaction.rollback();
+            if (session != null && session.isOpen()) session.close();
+        }
+    }
+    
+    
+    @Override
+    public Map<EventType, Notify> getSnoozeNotify(String tripId, String snoozeduration ,  EventType[] eventTypeArr) throws Exception {
+        Map<EventType, Notify> map = new HashMap<>();
+        Session session = null;
+        Transaction transaction = null;
+
+        try {
+            session = sessionFactory.getCurrentSession();
+            transaction = session.beginTransaction();
+
+            for (EventType eventType : eventTypeArr) {
+                Notify notify = notifyDao.findSingle(
+                        "SELECT e FROM " + Notify.class.getSimpleName() + " e " +
+                                "WHERE e.tripId = :tripId " +
+                                "AND e.eventType = :eventType ",
+                               
+                        new AbstractDao.Order[]{new AbstractDao.Order("e.date",DESC)},
+                        new AbstractDao.StrParam("tripId", tripId),
+                        new AbstractDao.StrParam("eventType", eventType.name()));
+                       
                 if (notify != null) map.put(eventType, notify);
             }
 
@@ -230,8 +264,20 @@ public class NotifyServiceImpl implements NotifyService {
             Date date = new Date();
             notify.setDateModified(date);
             notify.setHandleDate(date);
+            
+            String snz =(notifyOutResp.getSnoozeduration()).toString();
+            
+            if (snz.isEmpty()) {
 
             notify.setStatus(CLOSED);
+            
+            }
+            
+            else {
+            
+            notify.setStatus(NEW);
+            }
+            
             notify.setHandler(user.getId());
 
             notifyDao.update(notify);

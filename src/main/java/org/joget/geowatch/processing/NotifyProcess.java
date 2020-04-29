@@ -87,7 +87,7 @@ public class NotifyProcess {
         if (notifyList == null) return null;
 
         for (Event event : eventList) {
-            Notify notify = null;
+        Notify notify = null;
             if (lastNotify == null) {
                 if (event.getEventSubType() == SOMETHING)
                     notify = Notify.update(new Notify(), event);
