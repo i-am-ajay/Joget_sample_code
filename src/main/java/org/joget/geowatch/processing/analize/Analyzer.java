@@ -15,6 +15,7 @@ import org.joget.geowatch.processing.dto.VehicleProcessData;
 import org.joget.geowatch.type.EventType;
 
 import org.joget.geowatch.processing.analize.impl.NoDataAnalyzer;
+import org.joget.geowatch.processing.analize.impl.NotReachedToStartingPointAnalizer;
 
 import java.util.HashMap;
 import java.util.List;
@@ -54,7 +55,7 @@ public abstract class Analyzer {
         ANALYZES.put(STOPPED_BLACKLIST_LOCATION, new GeofenceAnalyzer());
         ANALYZES.put(STOPPED_REDZONE_LOCATION, new GeofenceAnalyzer());
         ANALYZES.put(NO_DATA, new NoDataAnalyzer());
-        
+        ANALYZES.put(EventType.DELAY_START_NEW, new NotReachedToStartingPointAnalizer());
         
         
     }

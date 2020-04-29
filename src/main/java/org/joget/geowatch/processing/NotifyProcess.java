@@ -84,7 +84,7 @@ public class NotifyProcess {
 
     protected List<Notify> process(List<Notify> notifyList, Notify lastNotify, List<Event> eventList) throws Exception{
         if (eventList == null || eventList.size() == 0) return notifyList;
-        if (notifyList == null) return null;
+        if (notifyList == null) return null;       
 
         for (Event event : eventList) {
         Notify notify = null;

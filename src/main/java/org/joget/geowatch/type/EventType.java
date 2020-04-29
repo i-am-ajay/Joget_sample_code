@@ -22,6 +22,7 @@ public enum EventType implements ILabel{
     STOPPED_UNKNOWN_LOCATION("STOPPED UNKNOWN LOCATION"),
 	STOPPED_BLACKLIST_LOCATION("STOPPED BLACKLIST LOCATION"),
 	STOPPED_REDZONE_LOCATION("STOPPED REDZONE LOCATION"),
+	DELAY_START_NEW("Device is 60 mins latet"),
 	DOOR_OPEN("DOOR OPEN");
 
     private String label;       // fixme: Chenge to labelId for multi language supporting

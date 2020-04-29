@@ -38,7 +38,7 @@ import static org.joget.geowatch.UiString.WP_LEFT;
 import static org.joget.geowatch.UiString.UNKNOWN_LOCATION_ISSUE;
 import static org.joget.geowatch.UiString.NO_DATA_ISSUE;
 import static org.joget.geowatch.UiString.BLACKLISTED_ZONE_ISSUE;
-import static org.joget.geowatch.UiString.RED_ZONE_ISSUE;
+import static org.joget.geowatch.UiString.*;
 import static org.joget.geowatch.db.dto.type.NotifyResolveStatusType.NEW;
 import static org.joget.geowatch.type.EventSubType.NONSENSE;
 import static org.joget.geowatch.type.EventSubType.SOMETHING;
@@ -449,7 +449,7 @@ public class Notify implements Serializable {
 
         switch (et) {
             case GHT_NET:
-                if (SOMETHING == st) return ALERT;
+                if (SOMETHING == st) return NOTICE;
                 if (NONSENSE == st) return NOTHING;
 
             case DOOR1:
@@ -493,7 +493,9 @@ public class Notify implements Serializable {
             case NO_DATA:
                 if (SOMETHING == st) return ALERT;
                 if (NONSENSE == st) return NOTHING;
-                
+            case DELAY_START_NEW:
+            	 if (SOMETHING == st) return ALERT;
+                 if (NONSENSE == st) return NOTHING;
         
             default:
                 throw new IllegalArgumentException("Can't resolve eventType: " + event.getEventType());
@@ -511,6 +513,23 @@ public class Notify implements Serializable {
                 if (NONSENSE == st) return "";
 
             case DOOR1:
+            	 if (SOMETHING == st) return String.format(DOOR1_OPEN_ISSUE,event.getLog().getVehicle().getType(),
+                         event.getLog().getGhtVehicle().getId());
+                 if (NONSENSE == st) return "";
+            case DOOR2:
+            	 if (SOMETHING == st) return String.format(DOOR2_OPEN_ISSUE,event.getLog().getVehicle().getType(),
+                         event.getLog().getGhtVehicle().getId());
+                 if (NONSENSE == st) return "";
+            case DOOR3:
+            	 if (SOMETHING == st) return String.format(DOOR3_OPEN_ISSUE,event.getLog().getVehicle().getType(),
+                         event.getLog().getGhtVehicle().getId());
+                 if (NONSENSE == st) return "";
+            case DOOR4:
+            	 if (SOMETHING == st) return String.format(DOOR4_OPEN_ISSUE,event.getLog().getVehicle().getType(),
+                         event.getLog().getGhtVehicle().getId());
+                 if (NONSENSE == st) return "";
+            	
+           /* case DOOR1:
             case DOOR2:
                 if (SOMETHING == st) return String.format(PANIC_ISSUE,
                         event.getLog().getVehicle().getType(),
@@ -523,7 +542,7 @@ public class Notify implements Serializable {
                         event.getLog().getVehicle().getType(),
                         event.getLog().getGhtVehicle().getId());
                 if (NONSENSE == st) return "";
-
+			*/
             case ROUTE:
                 if (SOMETHING == st) return String.format(ROUTE_ISSUE,
                         event.getLog().getGhtVehicle().getId());
@@ -569,6 +588,9 @@ public class Notify implements Serializable {
                 
             case  NO_DATA:
                 if (SOMETHING == st) return String.format(NO_DATA_ISSUE);
+                if (NONSENSE == st) return "";
+            case DELAY_START_NEW:
+            	if (SOMETHING == st) return String.format(NOT_ARRIVED_TO_STARTING_POINT);
                 if (NONSENSE == st) return "";
                 
           

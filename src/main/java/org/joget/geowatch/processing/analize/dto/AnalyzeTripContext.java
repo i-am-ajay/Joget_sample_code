@@ -105,11 +105,11 @@ public class AnalyzeTripContext {
         		try {
         			
         			ent.setRadius(Double.parseDouble(fence.getRadius()));
-        			System.out.println("RADIUS --"+ent.getRadius());
+        			//System.out.println("RADIUS --"+ent.getRadius());
         		}
         		catch(Exception e)
         		{
-        			System.out.println("RADIUS --"+fence.getRadius());
+        			//System.out.println("RADIUS --"+fence.getRadius());
         			e.printStackTrace();
         		}
         		
@@ -129,8 +129,7 @@ public class AnalyzeTripContext {
         	}
     	
     	}
-    	System.out.println("BLACK LISTED GEOS ----");
- 		System.out.println(blackListedGeo);
+    
 		return blackListedGeo;
 	}
     
@@ -170,7 +169,7 @@ public class AnalyzeTripContext {
         			
         			
         			ent.setRadius(Double.parseDouble(fence.getRadius()));
-        			System.out.println("RADIUS --"+ent.getRadius());
+        			//System.out.println("RADIUS --"+ent.getRadius());
         		}
         		catch(Exception e)
         		{
@@ -193,8 +192,7 @@ public class AnalyzeTripContext {
         	}
     	
     	}
- 		System.out.println("ALERT GEOS ----");
- 		System.out.println(alertzonegeos);
+
  		return alertzonegeos;
  	}
 
