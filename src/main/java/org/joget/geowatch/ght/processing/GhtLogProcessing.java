@@ -75,7 +75,8 @@ public class GhtLogProcessing {
     }
 
     protected GhtLogResponse getGhtLogResponse(Trip trip, GhtVehicleInnerEntity ghtVehicle, Date lastLogRrqDate) throws Exception {
-        if (ghtVehicle == null) return null;
+       // System.out.println("getGhtLogResponse ghtVehicle == "+ghtVehicle);
+    	if (ghtVehicle == null) return null;
 
         GhtLogResponse res = new GhtLogResponse(trip, ghtVehicle.getId(), lastLogRrqDate);
         res.setResponse(netService.pullGhtLogByGhtVehicleId(res.getGhtVehicleId(), res.getDate4newLogReq()));
@@ -112,11 +113,14 @@ public class GhtLogProcessing {
     }
 
     protected LogData processResponse(Trip trip, VehicleInnerEntity vehicle, GhtVehicleInnerEntity ghtVehicle, GhtLogResponse ghtLogResponse) throws Exception {
-        if (ghtLogResponse == null) return null;
+      
+    //	System.out.println( "processResponse Before Condition ");
+    	if (ghtLogResponse == null) return null;
         if (trip == null) return null;
         if (vehicle == null) return null;
         if (ghtVehicle == null) return null;
-
+      //  System.out.println( "processResponse After Condition ");
+        
         LogData logData = new LogData(trip.getId(), vehicle.getId(), ghtVehicle.getId(), ghtLogResponse.getDate4newLogReq());
 
         if (ghtLogResponse.getResponse().getResultObj() != null)

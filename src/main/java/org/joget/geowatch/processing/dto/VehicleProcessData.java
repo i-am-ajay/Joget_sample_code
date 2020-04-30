@@ -57,6 +57,8 @@ public class VehicleProcessData {
     }
 
     public void addGhtResponse(VehicleType tripVehicleType, GhtLogResponse response) {
+    	//System.out.println("RESPNSE FOR THE TRIP "+tripVehicleType);
+    	//System.out.println(response);
         ghtResponseArr[tripVehicleType.ordinal()] = response;
     }
 
@@ -69,6 +71,8 @@ public class VehicleProcessData {
     }
 
     public void addNewLogData(VehicleType tripVehicleType, LogData logData) {
+    	//System.out.println("added Logs for "+tripVehicleType);
+    	//System.out.println(logData);
         newLogDataArr[tripVehicleType.ordinal()] = logData;
     }
 

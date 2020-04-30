@@ -10,6 +10,8 @@ import org.joget.geowatch.db.dto.inner.VehicleLastPositionInnerEntity;
 import org.joget.geowatch.db.dto.type.JobType;
 import org.joget.geowatch.db.dto.type.TripLifeStateType;
 import org.joget.geowatch.db.dto.type.TripLifeSubStateType;
+import org.joget.geowatch.db.dto.type.VehicleType;
+import org.joget.geowatch.db.dto.type.YesNoType;
 
 import javax.persistence.Column;
 import javax.persistence.Convert;
@@ -724,7 +726,27 @@ private String c_PortableDeviceID;
     }
 
     public VehicleInnerEntity getHaulierVehicle() {
-        return haulierVehicle;
+    	
+    	 if(this.jobType.equals(JobType.CUSTOM_JOB)) {
+ 	    	
+    		 VehicleInnerEntity customhaulierTrailer =new VehicleInnerEntity();
+  		   
+  		   
+    		 customhaulierTrailer.setId(c_TruckVanReg);
+    		 customhaulierTrailer.setName(c_TruckVanReg);
+  		   	 customhaulierTrailer.setType(VehicleType.HAULIER);
+  		   	 customhaulierTrailer.setDoorAlarm(this.c_DoorSensor.equals("YES")?YesNoType.YES:YesNoType.NO);
+  			 customhaulierTrailer.setPanicButton(this.c_DoorSensor.equals("YES")?YesNoType.YES:YesNoType.NO);
+  			 
+  		   	 return customhaulierTrailer; 
+  	
+  	   }
+  	 else 
+       {
+       	 return haulierVehicle;
+       	 
+       }
+       
      
         
     }
@@ -734,7 +756,30 @@ private String c_PortableDeviceID;
     }
 
     public VehicleInnerEntity getHaulierTrailerVehicle() {
-        return haulierTrailerVehicle;
+    	
+    	 if(this.jobType.equals(JobType.CUSTOM_JOB)) {
+    		 
+    		 if(c_TrailerReg==null||c_TrailerReg.isEmpty())
+  			   return null;
+    		 VehicleInnerEntity customhaulierTrailer =new VehicleInnerEntity();
+  		   
+  		   
+    		 customhaulierTrailer.setId(c_TrailerReg);
+    		 customhaulierTrailer.setName(c_TrailerReg);
+    	 	 customhaulierTrailer.setType(VehicleType.TRAILER);
+  		   	 customhaulierTrailer.setDoorAlarm(this.c_DoorSensor.equals("YES")?YesNoType.YES:YesNoType.NO);
+  			 customhaulierTrailer.setPanicButton(this.c_DoorSensor.equals("YES")?YesNoType.YES:YesNoType.NO);
+  			
+  		   
+  		   return customhaulierTrailer; 
+  	
+  	   }
+  	 else 
+       {
+       	 return haulierTrailerVehicle;
+       	 
+       }
+       
     }
 
     public void setHaulierTrailerVehicle(VehicleInnerEntity haulierTrailerVehicle) {
@@ -788,6 +833,8 @@ private String c_PortableDeviceID;
     	
     	   if(this.jobType.equals(JobType.CUSTOM_JOB)) {
     	
+    		   if(c_TrailerReg==null||c_TrailerReg.isEmpty())
+    			   return null;
     		   GhtVehicleInnerEntity customhaulierTrailerGhtVehicle =new GhtVehicleInnerEntity();
     		   
     		   
