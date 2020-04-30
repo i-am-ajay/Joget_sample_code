@@ -60,11 +60,11 @@ public abstract class Analyzer {
         
     }
 
-  public static void analyze(VehicleProcessData vehicleProcessData,GeofenceService geofenceService, LogService logService) throws Exception {
+  public static void analyze(VehicleProcessData vehicleProcessData,GeofenceService geofenceService) throws Exception {
     	
         Trip trip = vehicleProcessData.getTrip();
         AnalyzeTripContext tripContext = getTripContext(trip);
-        tripContext.setLogService(logService);
+        
         tripContext.setBlackListed(geofenceService.listgeotype("BLACKLIST_ZONE"));
         tripContext.setAlertzones(geofenceService.listgeotype("ALERT_ZONE"));
         for (LogData logDate : vehicleProcessData.getNewLogDataArr()) {

@@ -9,7 +9,10 @@ import java.util.Date;
 import java.util.List;
 
 import org.joget.commons.util.LogUtil;
+import org.joget.geowatch.app.AppContext;
 import org.joget.geowatch.db.dto.Log;
+import org.joget.geowatch.db.service.LogService;
+import org.joget.geowatch.db.service.impl.LogServiceImpl;
 import org.joget.geowatch.processing.analize.Analyzer;
 import org.joget.geowatch.processing.analize.dto.AnalyzeTripContext;
 import org.joget.geowatch.processing.analize.result.AnalyzeResult;
@@ -21,6 +24,18 @@ import org.joget.geowatch.type.EventType;
 public class NoDataAnalyzer extends Analyzer {
 	
 	private static final String TAG = NoDataAnalyzer.class.getSimpleName();
+	protected LogService logService;
+	public NoDataAnalyzer() {
+		// TODO Auto-generated constructor stub
+		
+		super();
+		try {
+			this.logService = AppContext.getBean("logService", LogServiceImpl.class);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
 
 	@Override
 	public void analyze(EventType eventType, AnalyzeTripContext tripContext, LogData logData) throws Exception {
@@ -55,7 +70,7 @@ public class NoDataAnalyzer extends Analyzer {
 				{
 					result= new AnalyzeResult(eventType, NONSENSE);
 				}
-				else if(tripContext.getLogService().checkActiveRecords(log.getTripId(), log.getVehicleId()))
+				else if(this.logService.checkActiveRecords(log.getTripId(), log.getVehicleId()))
 				{
 				result= new AnalyzeResult(eventType, SOMETHING);
 				}

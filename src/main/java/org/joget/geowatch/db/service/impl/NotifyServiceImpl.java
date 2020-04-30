@@ -10,6 +10,7 @@ import org.joget.geowatch.db.dao.Dao;
 import org.joget.geowatch.db.dao.impl.AbstractDao;
 import org.joget.geowatch.db.dto.Event;
 import org.joget.geowatch.db.dto.Notify;
+import org.joget.geowatch.db.dto.type.NotifyResolveStatusType;
 import org.joget.geowatch.db.service.NotifyService;
 import org.joget.geowatch.type.EventType;
 import org.joget.geowatch.type.NotifyType;
@@ -275,7 +276,7 @@ public class NotifyServiceImpl implements NotifyService {
             
             else {
             
-            notify.setStatus(NEW);
+            notify.setStatus(NotifyResolveStatusType.SNOOZED);
             }
             
             notify.setHandler(user.getId());

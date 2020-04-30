@@ -29,17 +29,11 @@ public class AnalyzeTripContext {
     
     protected List<Geofence> alertzones;
     protected List<ExGeo> alertzonegeos;
-    protected LogService logService;
+    
 
   
 
-	public LogService getLogService() {
-		return logService;
-	}
 
-	public void setLogService(LogService logService) {
-		this.logService = logService;
-	}
 
 	public void setBlackListed(List<Geofence> blackListed) {
 		this.blackListed = blackListed;

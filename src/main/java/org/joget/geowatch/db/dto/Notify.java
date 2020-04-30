@@ -142,7 +142,16 @@ public class Notify implements Serializable {
     public String getSnoozeduration() {
 		return snoozeduration;
 	}
-
+    
+    public Long getSnoozedurationLong() {
+    
+    	try {
+			return Long.parseLong(snoozeduration);
+		} catch (Exception e) {
+			// TODO: handle exception
+		}
+		return 0l;
+	}
 	public void setSnoozeduration(String snoozeduration) {
 		this.snoozeduration = snoozeduration;
 	}
@@ -615,6 +624,7 @@ public class Notify implements Serializable {
                 ", status=" + status +
                 ", note='" + note + '\'' +
                 ", tripId='" + tripId + '\'' +
+                ", snoozeduration='" + snoozeduration + '\'' +
                 ", ghtVehicleId='" + ghtVehicleId + '\'' +
                 ", handler='" + handler + '\'' +
                 ", handleDate=" + handleDate +

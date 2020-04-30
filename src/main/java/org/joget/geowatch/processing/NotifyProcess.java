@@ -2,6 +2,7 @@ package org.joget.geowatch.processing;
 
 import org.joget.geowatch.db.dto.Event;
 import org.joget.geowatch.db.dto.Notify;
+import org.joget.geowatch.db.dto.type.NotifyResolveStatusType;
 import org.joget.geowatch.db.service.NotifyService;
 import org.joget.geowatch.processing.dto.EventData;
 import org.joget.geowatch.processing.dto.NotifyData;
@@ -11,6 +12,7 @@ import org.joget.geowatch.type.EventType;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import static org.joget.geowatch.db.dto.type.VehicleType.HAULIER;
 import static org.joget.geowatch.db.dto.type.VehicleType.RMO;
@@ -83,9 +85,14 @@ public class NotifyProcess {
     }
 
     protected List<Notify> process(List<Notify> notifyList, Notify lastNotify, List<Event> eventList) throws Exception{
-        if (eventList == null || eventList.size() == 0) return notifyList;
+       
+    	
+    	if (eventList == null || eventList.size() == 0) return notifyList;
         if (notifyList == null) return null;       
 
+       
+        	//System.out.println("Old Notification Details -"+lastNotify);
+        
         for (Event event : eventList) {
         Notify notify = null;
             if (lastNotify == null) {
@@ -96,7 +103,34 @@ public class NotifyProcess {
             }
 
             if (notify != null) {
-                if (lastNotify != null) Notify.update2(lastNotify, event);
+            	
+                if (lastNotify != null) 
+                	Notify.update2(lastNotify, event);
+                
+               
+                
+                if(lastNotify!=null)
+                {
+                	System.out.println("Old Notification FOUND WITH STATUS ---"+lastNotify.getStatus());
+                	if(lastNotify.getStatus().equals(NotifyResolveStatusType.SNOOZED))
+                	{
+                		//SNOOZED NOTIFICATION IS FOUND
+                		
+                		long tDuration = event.getDate().getTime() - notify.getDate().getTime();
+                        if (tDuration > 0) 
+                        {
+                        long duration = TimeUnit.MILLISECONDS.toMinutes(tDuration);
+                        
+                        if(duration<lastNotify.getSnoozedurationLong()) {
+                        	//Break the loop because its snoozed.. 
+                        	continue;
+                        }
+                        
+                        }
+                        
+                        
+                	}
+                }
                 lastNotify = notify;
                 notifyList.add(notify);
             }

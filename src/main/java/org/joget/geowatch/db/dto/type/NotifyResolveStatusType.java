@@ -9,6 +9,7 @@ import org.joget.geowatch.type.ILabel;
  */
 public enum NotifyResolveStatusType implements ILabel {
     NEW("New"),
+    SNOOZED("Snoozed"),
     CLOSED("Closed");
 
     private String label;       // fixme: Chenge to labelId for multi language supporting
