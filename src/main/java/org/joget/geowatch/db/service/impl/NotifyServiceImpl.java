@@ -266,17 +266,23 @@ public class NotifyServiceImpl implements NotifyService {
             notify.setDateModified(date);
             notify.setHandleDate(date);
             
-            String snz =(notifyOutResp.getSnoozeduration()).toString();
-            
-            if (snz.isEmpty()) {
+            if (notifyOutResp.getSnoozeduration()==null) {
 
-            notify.setStatus(CLOSED);
+            	
+            	   notify.setStatus(CLOSED);
             
             }
             
             else {
+            	if (notifyOutResp.getSnoozeduration().isEmpty())
+            	{
+            		   notify.setStatus(CLOSED);
+            	}
+            	else
+            	{
+            		notify.setStatus(NotifyResolveStatusType.SNOOZED);
+            	}
             
-            notify.setStatus(NotifyResolveStatusType.SNOOZED);
             }
             
             notify.setHandler(user.getId());

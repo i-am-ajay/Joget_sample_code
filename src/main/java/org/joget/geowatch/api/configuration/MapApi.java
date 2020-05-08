@@ -62,7 +62,9 @@ public class MapApi extends DefaultApplicationPlugin implements PluginWebSupport
 
     @Override
     public void webService(HttpServletRequest request, HttpServletResponse response) throws ServletException {
-        HttpWrap httpWrap = new HttpWrap(request, response);
+    
+    	
+    	HttpWrap httpWrap = new HttpWrap(request, response);
         try {
             if (PLUGIN_DEBUG_MODE) {
                 LogUtil.info(TAG, "INCOMING METHOD: " + request.getMethod());

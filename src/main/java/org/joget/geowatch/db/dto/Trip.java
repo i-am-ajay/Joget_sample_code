@@ -702,6 +702,10 @@ private String c_PortableDeviceID;
     }
 
     public String getHaulierVehicleId() {
+    	 if(this.jobType.equals(JobType.CUSTOM_JOB)) {
+    		 return this.c_TruckVanReg;
+    	 }
+    	 else
         return haulierVehicleId;
     }
 
@@ -710,6 +714,10 @@ private String c_PortableDeviceID;
     }
 
     public String getHaulierTrailerVehicleId() {
+    	 if(this.jobType.equals(JobType.CUSTOM_JOB)) {
+    		 return this.c_TrailerReg;
+    	 }
+    	 else
         return haulierTrailerVehicleId;
     }
 
@@ -807,7 +815,7 @@ private String c_PortableDeviceID;
     	  GhtVehicleInnerEntity  customhaulierGhtVehicle = new GhtVehicleInnerEntity();
 	        	
 	      customhaulierGhtVehicle.setId(c_TruckVanReg);
-	      customhaulierGhtVehicle.setTransportCompany("self");
+	      customhaulierGhtVehicle.setTransportCompany("IEGGLMOJ");
 	         
         
     	   return customhaulierGhtVehicle;
@@ -839,7 +847,7 @@ private String c_PortableDeviceID;
     		   
     		   
     		   customhaulierTrailerGhtVehicle.setId(c_TrailerReg);
-    		   customhaulierTrailerGhtVehicle.setTransportCompany("self");
+    		   customhaulierTrailerGhtVehicle.setTransportCompany("IEGGLMOJ");
     		   
     		   return customhaulierTrailerGhtVehicle; 
     	
