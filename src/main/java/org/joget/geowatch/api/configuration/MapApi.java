@@ -1,7 +1,11 @@
 package org.joget.geowatch.api.configuration;
 
 
+import org.joget.apps.app.service.AppUtil;
+import org.joget.apps.form.dao.FormDataDao;
+import org.joget.apps.form.model.FormRow;
 import org.joget.commons.util.LogUtil;
+import org.joget.commons.util.SecurityUtil;
 import org.joget.directory.model.User;
 import org.joget.geowatch.api.controller.Controller;
 import org.joget.geowatch.api.controller.HttpWrap;
@@ -81,18 +85,35 @@ public class MapApi extends DefaultApplicationPlugin implements PluginWebSupport
             httpWrap.send();
         }
     }
-
+    
+    public boolean validate(String token)
+    {
+    	FormDataDao formDatadao = (FormDataDao) AppUtil.getApplicationContext().getBean("formDataDao");
+		FormRow row=formDatadao.load("links","share_link", SecurityUtil.decrypt(token));
+		if(row==null)
+		return false;
+		
+    	return true;
+    }
+    
     private HttpWrap innerWebService(HttpWrap httpWrap) throws Exception {
 
         String action = httpWrap.getParameter("action");
         if (isBlank(action)) return httpWrap.error(SC_BAD_REQUEST, null);
 
         WorkflowUserManager wfum = AppContext.getBean("workflowUserManager", WorkflowUserManager.class);
-        User user = wfum.getCurrentUser();
+       
 
+        if(!isBlank(httpWrap.getParameter("token")))
+        {	if(validate(httpWrap.getParameter("token"))==false)
+        	 return httpWrap.error(SC_UNAUTHORIZED, null);
+           wfum.setCurrentThreadUser("guest");
+        }
+        else
         if (WorkflowUtil.isCurrentUserAnonymous() && !action.equals("LifeTrip")) {
             return httpWrap.error(SC_UNAUTHORIZED, null);
         }
+        User user = wfum.getCurrentUser();
         
        System.out.println("Action type :"+ action ); 
        System.out.println(ActionType.valueOf(action));
