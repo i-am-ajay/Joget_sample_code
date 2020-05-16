@@ -5,6 +5,7 @@ import org.hibernate.annotations.Type;
 import org.joget.geowatch.api.dto.out.resp.NotifyOutResp;
 import org.joget.geowatch.db.dto.inner.GhtVehicleInnerEntity;
 import org.joget.geowatch.db.dto.inner.VehicleInnerEntity;
+import org.joget.geowatch.db.dto.type.JobType;
 import org.joget.geowatch.db.dto.type.NotifyResolveStatusType;
 import org.joget.geowatch.processing.analize.result.AnalyzeResult;
 import org.joget.geowatch.type.EventSubType;
@@ -325,7 +326,31 @@ public class Notify implements Serializable {
     }
 
     public GhtVehicleInnerEntity getGhtVehicle() {
+    	
+    	// return ghtVehicle;
+    	 
+    
+    	  	
+    	if(this.trip.getJobType().equals(JobType.CUSTOM_JOB)) {
+    		
+    		 
+    		
+    		GhtVehicleInnerEntity customGhtVehicale = new GhtVehicleInnerEntity();
+    		
+    		customGhtVehicale.setId(ghtVehicleId);
+    		customGhtVehicale.setTransportCompany("IEGGLMOJ");
+    		
+    		
+    		return customGhtVehicale ;
+    		
+    	}
+    	
+    	else {
+    		
+    	 
+    	
         return ghtVehicle;
+    	} 
     }
 
     public void setGhtVehicle(GhtVehicleInnerEntity ghtVehicle) {

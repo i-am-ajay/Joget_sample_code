@@ -115,9 +115,7 @@ public class MapApi extends DefaultApplicationPlugin implements PluginWebSupport
         }
         User user = wfum.getCurrentUser();
         
-       System.out.println("Action type :"+ action ); 
-       System.out.println(ActionType.valueOf(action));
-
+     
         Controller controller;
         switch (ActionType.valueOf(action)) {
             case Route:

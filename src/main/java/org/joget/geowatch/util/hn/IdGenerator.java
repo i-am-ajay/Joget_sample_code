@@ -27,7 +27,7 @@ public class IdGenerator implements IdentifierGenerator {
             if (rs.next()) {
                 int id = rs.getInt(1) + 101;
                 String generatedId = prefix + new Integer(id).toString();
-                System.out.println("Generated Id: " + generatedId);
+              //  System.out.println("Generated Id: " + generatedId);
                 return generatedId;
             }
         } catch (SQLException e) {

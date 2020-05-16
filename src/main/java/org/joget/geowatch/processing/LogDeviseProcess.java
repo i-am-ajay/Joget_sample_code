@@ -222,15 +222,12 @@ public class LogDeviseProcess {
                 ? notify.getTrip().getEmailMonitorGroup().split(";") : null;
         if (userIdArr != null) userIdList.addAll(Arrays.asList(userIdArr));
 
-        System.out.println("-------------In email send process EARLIER------------"+notify.getEventType());
         for (String userId : userIdList) {
             String bodyKey = null;
             try {
                 bodyKey = getBody(notify.getEventType(), notify.getEventSubType(), notify.getNotifyType());
                 
-                System.out.println("-------------In email send process------------");
-                System.out.println("notify.getGhtVehicle()---------"+notify.getGhtVehicle());
-                System.out.println("notify.getTrip()---------------"+notify.getTrip());
+                
                 if (bodyKey != null) sendEmail(userId, notify.getTrip(), notify.getGhtVehicle(), notify, bodyKey);
             } catch (Exception e) {
                 LogUtil.error(TAG, e, "Error. Send email. tripId: " + notify.getTrip().getId() + ", userId: " + userId + ", bodyKey: " + bodyKey);
@@ -339,12 +336,18 @@ public class LogDeviseProcess {
         ExtDirectoryManager directoryManager = AppContext.getBean("directoryManager", ExtDirectoryManager.class);
         User user = directoryManager.getUserById(userId);
         if (user == null) return;
+        
+     
+    
 
         String eventDateStr = getUiShortStrDate(notify.getDate(), user);
         String body = ResourceBundleUtil.getMessage(bodyKey, new Locale(JOGET_SYSTEM_LOCALE));
         if (!isEmpty(user.getLocale()))
             body = ResourceBundleUtil.getMessage(bodyKey, body, new Locale(user.getLocale()));
         if (isEmpty(body)) return;
+        
+        
+    	 
 
         JogetUtil.Email email = new JogetUtil.Email(
                 userId,
@@ -357,6 +360,8 @@ public class LogDeviseProcess {
                         ? notify.getEvent1().getWp().getName()
                         : ""
         );
+        
+       
 
         GglGeoWatchPluginActivator.sendEmail(email);
     }

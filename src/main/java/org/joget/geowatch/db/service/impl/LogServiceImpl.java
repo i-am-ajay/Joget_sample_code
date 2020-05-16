@@ -229,7 +229,7 @@ public class LogServiceImpl implements LogService {
 
             transaction.commit();
             transaction = null;
-            System.out.println("RESURCE IS FOUND "+res +" DATE "+date+" TRIP ID "+tripId+" vehicle "+vehicleId);
+           
             return res==null;
         } 
         catch(Exception e)

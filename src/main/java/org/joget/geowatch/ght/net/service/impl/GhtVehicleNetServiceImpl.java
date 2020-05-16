@@ -32,7 +32,7 @@ public class GhtVehicleNetServiceImpl extends AbstractGhTrackService implements 
     pullGhtLogByGhtVehicleId(String ghtVehicleId, Date lastLogDate) throws Exception {
         UrlUtil.RespResult<LogGhtVehicleInResp, GhtVehicleError> respRes;
 
-        System.out.println("----"+lastLogDate);
+        
         if (lastLogDate != null) {
             respRes =
                     getObj(LogGhtVehicleInResp.class, GhtVehicleError.class,

@@ -66,8 +66,7 @@ public class GeoDataServiceImpl implements GeoDataService {
                     new AbstractDao.StrParam("tripId", tripId),
                     new AbstractDao.DateParam("date", dateStart)
             );
-            System.out.println("Start Date"+dateStart);
-            System.out.println("Logs --"+logs);
+          
             transaction.commit();
             transaction = null;
 
@@ -85,7 +84,7 @@ public class GeoDataServiceImpl implements GeoDataService {
                         trip.getRmoVehicleId(), trip.getRmoGhtVehicle(), RMO));
 
 
-            System.out.println(vehicles);
+            
             if (logs != null) {
                 List<LogJson> logsJson = ApiUtil.remapListLogDtoToListLogJson(logs, currentUser);
                 for (VehicleJson veh : vehicles) {
