@@ -117,6 +117,16 @@ public class AppProperties {
     public static final String KEY_ROUTE_NOT_EXIST;
     public static final String KEY_GEOFENCE_EXIST;
     public static final String KEY_GEOFENCE_NOT_EXIST;
+    
+    public static final String KEY_EMAIL_BODY_NOTIFICATION_NO_DATA;
+    public static final String KEY_EMAIL_BODY_NOTIFICATION_STOPPED_UNKNOWN_LOCATION;
+    public static final String KEY_EMAIL_BODY_NOTIFICATION_STOPPED_BLACKLIST_LOCATION;
+    public static final String KEY_EMAIL_BODY_NOTIFICATION_STOPPED_REDZONE_LOCATION;
+    public static final String KEY_EMAIL_BODY_NOTIFICATION_DELAY_START_NEW;
+    
+    
+    
+    
 
     static {
         KEY_EMAIL_BODY_NOTIFICATION_LEFT_THE_ROUTE = AppPluginUtil.getMessage("key.email.body.notification.left.the.route", CLAS, "/project");
@@ -132,6 +142,18 @@ public class AppProperties {
         KEY_EMAIL_BODY_NOTIFICATION_GHTRACK = AppPluginUtil.getMessage("key.email.body.notification.ght", CLAS, "/project");
         KEY_EMAIL_BODY_NOTIFICATION_DELAY_START_ZONE = AppPluginUtil.getMessage("key.email.body.notification.delay.start.zone", CLAS, "/project");
         KEY_EMAIL_BODY_NOTIFICATION_DELAY_FINISH_ZONE = AppPluginUtil.getMessage("key.email.body.notification.delay.finish.zone", CLAS, "/project");
+        
+        //new code
+        
+        KEY_EMAIL_BODY_NOTIFICATION_NO_DATA = AppPluginUtil.getMessage("key.email.body.notification.no.data", CLAS, "/project");
+        KEY_EMAIL_BODY_NOTIFICATION_STOPPED_UNKNOWN_LOCATION = AppPluginUtil.getMessage("key.email.body.notification.stopped.unknown.location", CLAS, "/project");
+        KEY_EMAIL_BODY_NOTIFICATION_STOPPED_REDZONE_LOCATION = AppPluginUtil.getMessage("key.email.body.notification.stopped.blacklist.location", CLAS, "/project");
+        KEY_EMAIL_BODY_NOTIFICATION_STOPPED_BLACKLIST_LOCATION = AppPluginUtil.getMessage("key.email.body.notification.stopped.redzone.location", CLAS, "/project");
+        KEY_EMAIL_BODY_NOTIFICATION_DELAY_START_NEW = AppPluginUtil.getMessage("key.email.body.notification.delay.start", CLAS, "/project");
+        
+        
+        
+        
         KEY_ROUTE_EXIST = AppPluginUtil.getMessage("key.route.exist", CLAS, "/project");
         KEY_ROUTE_NOT_EXIST = AppPluginUtil.getMessage("key.route.not.exist", CLAS, "/project");
         KEY_GEOFENCE_EXIST = AppPluginUtil.getMessage("key.geofence.exist", CLAS, "/project");

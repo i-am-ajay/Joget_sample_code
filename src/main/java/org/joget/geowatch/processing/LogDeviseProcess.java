@@ -222,10 +222,15 @@ public class LogDeviseProcess {
                 ? notify.getTrip().getEmailMonitorGroup().split(";") : null;
         if (userIdArr != null) userIdList.addAll(Arrays.asList(userIdArr));
 
+        System.out.println("-------------In email send process EARLIER------------"+notify.getEventType());
         for (String userId : userIdList) {
             String bodyKey = null;
             try {
                 bodyKey = getBody(notify.getEventType(), notify.getEventSubType(), notify.getNotifyType());
+                
+                System.out.println("-------------In email send process------------");
+                System.out.println("notify.getGhtVehicle()---------"+notify.getGhtVehicle());
+                System.out.println("notify.getTrip()---------------"+notify.getTrip());
                 if (bodyKey != null) sendEmail(userId, notify.getTrip(), notify.getGhtVehicle(), notify, bodyKey);
             } catch (Exception e) {
                 LogUtil.error(TAG, e, "Error. Send email. tripId: " + notify.getTrip().getId() + ", userId: " + userId + ", bodyKey: " + bodyKey);
@@ -286,6 +291,43 @@ public class LogDeviseProcess {
                 if (SOMETHING == eventSubType) key = KEY_EMAIL_BODY_NOTIFICATION_DELAY_FINISH_ZONE;
                 else if (NONSENSE == eventSubType) key = null;
                 break;
+                
+              //New code
+                
+			case NO_DATA:
+				if (SOMETHING == eventSubType)
+					key = KEY_EMAIL_BODY_NOTIFICATION_NO_DATA;
+				else if (NONSENSE == eventSubType)
+					key = null;
+				break;
+			case STOPPED_UNKNOWN_LOCATION:
+				if (SOMETHING == eventSubType)
+					key = KEY_EMAIL_BODY_NOTIFICATION_STOPPED_UNKNOWN_LOCATION;
+				else if (NONSENSE == eventSubType)
+					key = null;
+				break;
+	
+			case STOPPED_BLACKLIST_LOCATION:
+				if (SOMETHING == eventSubType)
+					key = KEY_EMAIL_BODY_NOTIFICATION_STOPPED_BLACKLIST_LOCATION;
+				else if (NONSENSE == eventSubType)
+					key = null;
+				break;
+	
+			case STOPPED_REDZONE_LOCATION:
+				if (SOMETHING == eventSubType)
+					key = KEY_EMAIL_BODY_NOTIFICATION_STOPPED_REDZONE_LOCATION;
+				else if (NONSENSE == eventSubType)
+					key = null;
+				break;
+	
+			case DELAY_START_NEW:
+				if (SOMETHING == eventSubType)
+					key = KEY_EMAIL_BODY_NOTIFICATION_DELAY_START_NEW;
+				else if (NONSENSE == eventSubType)
+					key = null;
+				break;
+	 
             default:
                 key = null;
                 break;
