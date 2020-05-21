@@ -547,19 +547,19 @@ public class Notify implements Serializable {
                 if (NONSENSE == st) return "";
 
             case DOOR1:
-            	 if (SOMETHING == st) return String.format(DOOR1_OPEN_ISSUE,event.getLog().getVehicle().getType(),
+            	 if (SOMETHING == st) return String.format(DOOR1_OPEN_ISSUE,event.getLog().getVehicle().getType()==null?"":event.getLog().getVehicle().getType(),
                          event.getLog().getGhtVehicle().getId());
                  if (NONSENSE == st) return "";
             case DOOR2:
-            	 if (SOMETHING == st) return String.format(DOOR2_OPEN_ISSUE,event.getLog().getVehicle().getType(),
+            	 if (SOMETHING == st) return String.format(DOOR2_OPEN_ISSUE,event.getLog().getVehicle().getType()==null?"":event.getLog().getVehicle().getType(),
                          event.getLog().getGhtVehicle().getId());
                  if (NONSENSE == st) return "";
             case DOOR3:
-            	 if (SOMETHING == st) return String.format(DOOR3_OPEN_ISSUE,event.getLog().getVehicle().getType(),
+            	 if (SOMETHING == st) return String.format(DOOR3_OPEN_ISSUE,event.getLog().getVehicle().getType()==null?"":event.getLog().getVehicle().getType(),
                          event.getLog().getGhtVehicle().getId());
                  if (NONSENSE == st) return "";
             case DOOR4:
-            	 if (SOMETHING == st) return String.format(DOOR4_OPEN_ISSUE,event.getLog().getVehicle().getType(),
+            	 if (SOMETHING == st) return String.format(DOOR4_OPEN_ISSUE,event.getLog().getVehicle().getType()==null?"":event.getLog().getVehicle().getType(),
                          event.getLog().getGhtVehicle().getId());
                  if (NONSENSE == st) return "";
             	
