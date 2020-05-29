@@ -206,7 +206,8 @@ public class LogDeviseProcess {
         Set<String> userIdList = new HashSet<>();
 
         String[] userIdArr;
-        userIdArr = !isEmpty(notify.getTrip().getEmailRequesterGroup())
+        
+/*        userIdArr = !isEmpty(notify.getTrip().getEmailRequesterGroup())
                 ? notify.getTrip().getEmailRequesterGroup().split(";") : null;
         if (userIdArr != null) userIdList.addAll(Arrays.asList(userIdArr));
 
@@ -217,16 +218,22 @@ public class LogDeviseProcess {
         userIdArr = !isEmpty(notify.getTrip().getEmailRmoGroup())
                 ? notify.getTrip().getEmailRmoGroup().split(";") : null;
         if (userIdArr != null) userIdList.addAll(Arrays.asList(userIdArr));
-
+        
+*/
+    
+        //Sent Email only to Monitor user
+        
         userIdArr = !isEmpty(notify.getTrip().getEmailMonitorGroup())
                 ? notify.getTrip().getEmailMonitorGroup().split(";") : null;
         if (userIdArr != null) userIdList.addAll(Arrays.asList(userIdArr));
 
+        
         for (String userId : userIdList) {
             String bodyKey = null;
             try {
                 bodyKey = getBody(notify.getEventType(), notify.getEventSubType(), notify.getNotifyType());
                 
+                System.out.println("Sending Email to "+userId +" Event Type "+notify.getEventType() + " Key "+bodyKey);
                 
                 if (bodyKey != null) sendEmail(userId, notify.getTrip(), notify.getGhtVehicle(), notify, bodyKey);
             } catch (Exception e) {
@@ -237,6 +244,9 @@ public class LogDeviseProcess {
 
     public static String getBody(EventType eventType, EventSubType eventSubType, NotifyType notifyType) {
         if (UNKNOWN == eventSubType) return null;
+        
+      
+      
 
         String key = null;
         switch (eventType) {
@@ -292,8 +302,11 @@ public class LogDeviseProcess {
               //New code
                 
 			case NO_DATA:
-				if (SOMETHING == eventSubType)
+				if (SOMETHING == eventSubType) {
+					
+					System.out.println("In No data Alert");
 					key = KEY_EMAIL_BODY_NOTIFICATION_NO_DATA;
+				}
 				else if (NONSENSE == eventSubType)
 					key = null;
 				break;
@@ -338,6 +351,7 @@ public class LogDeviseProcess {
         if (user == null) return;
         
      
+      
     
 
         String eventDateStr = getUiShortStrDate(notify.getDate(), user);
@@ -346,7 +360,8 @@ public class LogDeviseProcess {
             body = ResourceBundleUtil.getMessage(bodyKey, body, new Locale(user.getLocale()));
         if (isEmpty(body)) return;
         
-        
+     
+      
     	 
 
         JogetUtil.Email email = new JogetUtil.Email(

@@ -147,8 +147,8 @@ public class AppProperties {
         
         KEY_EMAIL_BODY_NOTIFICATION_NO_DATA = AppPluginUtil.getMessage("key.email.body.notification.no.data", CLAS, "/project");
         KEY_EMAIL_BODY_NOTIFICATION_STOPPED_UNKNOWN_LOCATION = AppPluginUtil.getMessage("key.email.body.notification.stopped.unknown.location", CLAS, "/project");
-        KEY_EMAIL_BODY_NOTIFICATION_STOPPED_REDZONE_LOCATION = AppPluginUtil.getMessage("key.email.body.notification.stopped.blacklist.location", CLAS, "/project");
-        KEY_EMAIL_BODY_NOTIFICATION_STOPPED_BLACKLIST_LOCATION = AppPluginUtil.getMessage("key.email.body.notification.stopped.redzone.location", CLAS, "/project");
+        KEY_EMAIL_BODY_NOTIFICATION_STOPPED_BLACKLIST_LOCATION = AppPluginUtil.getMessage("key.email.body.notification.stopped.blacklist.location", CLAS, "/project");
+        KEY_EMAIL_BODY_NOTIFICATION_STOPPED_REDZONE_LOCATION = AppPluginUtil.getMessage("key.email.body.notification.stopped.redzone.location", CLAS, "/project");
         KEY_EMAIL_BODY_NOTIFICATION_DELAY_START_NEW = AppPluginUtil.getMessage("key.email.body.notification.delay.start", CLAS, "/project");
         
         
