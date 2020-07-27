@@ -67,6 +67,7 @@ public abstract class Analyzer {
         
         tripContext.setBlackListed(geofenceService.listgeotype("BLACKLIST_ZONE"));
         tripContext.setAlertzones(geofenceService.listgeotype("ALERT_ZONE"));
+        tripContext.setAllalertzones(geofenceService.list(""));
         for (LogData logDate : vehicleProcessData.getNewLogDataArr()) {
             try {
                 if (logDate != null) analyze(tripContext, logDate);

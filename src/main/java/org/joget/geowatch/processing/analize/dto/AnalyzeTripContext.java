@@ -30,10 +30,29 @@ public class AnalyzeTripContext {
     protected List<Geofence> alertzones;
     protected List<ExGeo> alertzonegeos;
     
-
+    protected List<ExGeo> allalertzonegeos;
+    protected List<Geofence> allalertzones;
+    
+    
   
 
 
+
+	public List<ExGeo> getAllalertzonegeos() {
+		return allalertzonegeos;
+	}
+
+	public void setAllalertzonegeos(List<ExGeo> allalertzonegeos) {
+		this.allalertzonegeos = allalertzonegeos;
+	}
+
+	public List<Geofence> getAllalertzones() {
+		return allalertzones;
+	}
+
+	public void setAllalertzones(List<Geofence> allalertzones) {
+		this.allalertzones = allalertzones;
+	}
 
 	public void setBlackListed(List<Geofence> blackListed) {
 		this.blackListed = blackListed;
@@ -189,6 +208,66 @@ public class AnalyzeTripContext {
 
  		return alertzonegeos;
  	}
+ 	
+ 	//List of all zone geopoints
+ 	
+public List<ExGeo> getAllAlertzonegeos() {
+	
+	
+	if(this.allalertzonegeos==null)
+	{
+		this.allalertzonegeos=new ArrayList<>();
+		for(Geofence fence:this.allalertzones)
+    	{
+    		WayPointInnerEntity ent=new WayPointInnerEntity();
+    		ent.setId(fence.getId());
+    		try {
+    		ent.setLat(Double.parseDouble(fence.getLat()));
+    		}
+    		catch(Exception e)
+    		{
+    			e.printStackTrace();
+    			continue;
+    		}
+    		try {
+    			ent.setLng(Double.parseDouble(fence.getLng()));
+    		}
+    		catch(Exception e)
+    		{
+    			continue;
+    		}
+    		try {
+    			
+    			
+    			ent.setRadius(Double.parseDouble(fence.getRadius()));
+    			//System.out.println("RADIUS --"+ent.getRadius());
+    		}
+    		catch(Exception e)
+    		{
+    			e.printStackTrace();
+    		}
+    		
+    		if(!StringUtils.isEmpty(fence.getPolygonHash()))
+    			ent.setPolygonHash(fence.getPolygonHash());
+    		
+    		ent.setZoneType(ZoneType.ALERT_ZONE);
+    		ent.setName(fence.getName());
+    		ent.setAddress(fence.getAddress());
+    		
+    		ExGeo geo=new ExGeo(ent);
+    		if(geo!=null)
+    		{
+    		if(fence.getRadius()!=null||fence.getPolygonHash()!=null)
+    		allalertzonegeos.add(geo);
+    		}
+    	}
+	
+	}
+ 		
+ 		 
+ 		return  allalertzonegeos;
+ 	}
+ 	
 
     public static AnalyzeTripContext getInstance(Trip trip) throws Exception {
         AnalyzeTripContext item = new AnalyzeTripContext();

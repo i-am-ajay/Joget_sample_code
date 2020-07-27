@@ -227,13 +227,13 @@ public class LogDeviseProcess {
                 ? notify.getTrip().getEmailMonitorGroup().split(";") : null;
         if (userIdArr != null) userIdList.addAll(Arrays.asList(userIdArr));
 
-        
         for (String userId : userIdList) {
             String bodyKey = null;
             try {
                 bodyKey = getBody(notify.getEventType(), notify.getEventSubType(), notify.getNotifyType());
                 
-                System.out.println("Sending Email to "+userId +" Event Type "+notify.getEventType() + " Key "+bodyKey);
+                System.out.println("--------------In Email Method for loop--------------");
+                System.out.println("Body Key :"+bodyKey);
                 
                 if (bodyKey != null) sendEmail(userId, notify.getTrip(), notify.getGhtVehicle(), notify, bodyKey);
             } catch (Exception e) {
@@ -245,8 +245,9 @@ public class LogDeviseProcess {
     public static String getBody(EventType eventType, EventSubType eventSubType, NotifyType notifyType) {
         if (UNKNOWN == eventSubType) return null;
         
-      
-      
+        System.out.println("--------------In Get Body--------------");
+        System.out.println("Event Type :"+eventType);
+        System.out.println("Event Sub Type :"+eventSubType);
 
         String key = null;
         switch (eventType) {
@@ -350,7 +351,7 @@ public class LogDeviseProcess {
         User user = directoryManager.getUserById(userId);
         if (user == null) return;
         
-     
+       System.out.println("---------In send Email method------------");
       
     
 
@@ -360,7 +361,7 @@ public class LogDeviseProcess {
             body = ResourceBundleUtil.getMessage(bodyKey, body, new Locale(user.getLocale()));
         if (isEmpty(body)) return;
         
-     
+        System.out.println("Body :"+body);
       
     	 
 

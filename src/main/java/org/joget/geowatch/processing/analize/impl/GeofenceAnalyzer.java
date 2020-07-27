@@ -70,9 +70,14 @@ public class GeofenceAnalyzer extends Analyzer {
             	}
             	else {                  
             		//System.out.println("CHECKING PATH STOPPED_UNKNOWN_LOCATION");
+            		// LatLng point = new LatLng(Double.parseDouble(log.getLat()), Double.parseDouble(log.getLng()));
+            		//  log.getAnalyzeResult().put(eventType, analyze(eventType,
+                   //           tripContext, point));
+            		
+            		
             		 LatLng point = new LatLng(Double.parseDouble(log.getLat()), Double.parseDouble(log.getLng()));
-            		  log.getAnalyzeResult().put(eventType, analyze(eventType,
-                              tripContext, point));
+              		
+             		log.getAnalyzeResult().put(eventType, analyze_unknownzones(eventType, tripContext.getAllAlertzonegeos(), point));
             	}
             } 
             break;
@@ -172,6 +177,20 @@ public class GeofenceAnalyzer extends Analyzer {
     
 
         return new AnalyzeResult(eventType, NONSENSE);
+    }
+    
+    
+    private AnalyzeResult analyze_unknownzones(EventType eventType, List<ExGeo> geos, LatLng point) {
+
+        for (ExGeo geo : geos) {
+        //	System.out.println(" "+eventType.toString() +" ... "+geo.getWp().getLat()+" -- "+geo.getWp().getLng()+" ... "+point.lat+" .."+point.lng);
+            if (geo.isWithin(point, ANALYZE_GEOFENCE_TOLERANCE))
+                return new AnalyzeResult(eventType,NONSENSE);
+        }
+
+    
+
+        return new AnalyzeResult(eventType, SOMETHING);
     }
 
 
