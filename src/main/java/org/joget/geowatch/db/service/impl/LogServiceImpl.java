@@ -207,6 +207,35 @@ public class LogServiceImpl implements LogService {
             if (session != null && session.isOpen()) session.close();
         }
     }
+    
+    
+    //New Nethod for Snooze  Alert Update
+    
+    /*
+     @Override
+    public String getLastLogDetails(String tripId) throws Exception {
+        Session session = null;
+        Transaction transaction = null;
+        try {
+            session = sessionFactory.getCurrentSession();
+            transaction = session.beginTransaction();
+
+            Log res = logDao.findSingle(
+                    "SELECT e FROM " + Log.class.getSimpleName() + " e " +
+                            "WHERE e.tripId = :tripId",
+                    new AbstractDao.Order[]{new AbstractDao.Order("e.date", DESC)},
+                    new AbstractDao.StrParam("tripId", tripId));
+
+            transaction.commit();
+            transaction = null;
+			return res;
+           // return res != null ? res.getServerDate() : null;
+        } finally {
+            if (transaction != null && !transaction.wasCommitted()) transaction.rollback();
+            if (session != null && session.isOpen()) session.close();
+        }
+    }
+     */
 
     @Override
     public boolean checkActiveRecords(String tripId,String vehicleId) {

@@ -150,6 +150,45 @@ public class NotifyServiceImpl implements NotifyService {
         }
         return res;
     }
+    
+    
+    //New Nethod for Snooze  Alert Update
+    
+    /*
+     public List<Notify> list(String tripId, Date date, String resolveStatus) throws Exception {
+        List<Notify> res;
+
+        Session session = null;
+        Transaction transaction = null;
+        try {
+            session = sessionFactory.getCurrentSession();
+            transaction = session.beginTransaction();
+
+            if (date == null) date = new Date(1L);
+
+            res = notifyDao.find(
+                    "SELECT e FROM " + Notify.class.getSimpleName() + " e " +
+                            "WHERE e.date > :date " +
+                            "AND e.tripId = :tripId " +
+                            "AND e.resolveStatus =:resolveStatus ",
+                    new AbstractDao.Order[]{new AbstractDao.Order("e.date", DESC)},
+                    new AbstractDao.DateParam("date", date),
+                    new AbstractDao.StrParam("tripId", tripId),
+					new AbstractDao.StrParam("resolveStatus", NotifyResolveStatusType.SNOOZED),
+					
+            );
+
+            
+
+            transaction.commit();
+            transaction = null;
+            return res;
+        } finally {
+            if (transaction != null && !transaction.wasCommitted()) transaction.rollback();
+            if (session != null && session.isOpen()) session.close();
+        }
+    }
+     */
 
     @Override
     public List<Notify> list(String tripId, Date date, Integer limit) throws Exception {

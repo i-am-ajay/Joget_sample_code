@@ -92,6 +92,10 @@ public class LogDeviseProcess {
 
     protected void process(Trip trip) throws Exception {
         LogUtil.info(TAG, "PROCESS LOG 4 TRIP. Id: " + trip.getId());
+        
+        
+        //New mwthod for snooze alert
+        checkSnoozeAlert(trip);
 
         VehicleProcessData vehicleProcessData = ghtLogProcessing.process(trip);
         Analyzer.analyze(vehicleProcessData,geofenceService);
@@ -120,6 +124,16 @@ public class LogDeviseProcess {
         		logService.save(logData.getLogList());
             }
             
+    }
+    
+    
+    //New Method for Snooze Alert Check
+    protected void checkSnoozeAlert(Trip trip) throws Exception {
+    	
+    	//Check code in package "org.joget.geowatch.db.service.impl" for below impl 
+    	//NotifyServiceImpl
+    	//LogServiceImpl
+        
     }
 
     private void updateTripLastPosition(VehicleProcessData vehicleProcessData, Trip trip) throws Exception {
