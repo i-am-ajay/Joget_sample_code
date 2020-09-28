@@ -131,6 +131,8 @@ public abstract class AbstractDao<T> implements Dao<T> {
             if (page.limit != null) query.setMaxResults(page.limit);
             if (page.offset != null) query.setFirstResult(page.offset);
         }
+        System.out.println("------------------------\n"+query+"\n------------------------");
+        
         return query.list();
     }
 

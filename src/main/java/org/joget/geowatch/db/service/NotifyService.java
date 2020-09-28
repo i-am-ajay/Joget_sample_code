@@ -16,6 +16,7 @@ import java.util.Map;
  * Time: 12:37 PM
  */
 public interface NotifyService {
+	
     Map<EventType, Notify> getLast(String tripId, String ghtVehicle, EventType[] eventTypeArr) throws Exception;
 
     void save(Collection<Notify> notifyList);
@@ -24,15 +25,19 @@ public interface NotifyService {
 
     List<Notify> list(String tripId, Date date, Integer limit) throws Exception;
 
+    
+    List<Notify> listSnoozed(String tripId) throws Exception;
+    
+    Notify getLastNotification(String tripId,EventType eventType,String ghtVehicleId) throws Exception;
+    
     Notify getWithEvent(String notifyId) throws Exception;
+    
 
     void update(Collection<Notify> notifyList);
 
     void update(Notify notify) throws Exception;
 
     NotifyOutResp update(User user, NotifyOutResp notifyJson) throws Exception;
-    
-    Map<EventType, Notify> getSnoozeNotify(String tripId, String snoozeduration , EventType[] eventTypeArr) throws Exception;
     
 }
 

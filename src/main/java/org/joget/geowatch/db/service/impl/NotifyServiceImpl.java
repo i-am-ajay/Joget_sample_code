@@ -15,6 +15,7 @@ import org.joget.geowatch.db.service.NotifyService;
 import org.joget.geowatch.type.EventType;
 import org.joget.geowatch.type.NotifyType;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
@@ -78,39 +79,62 @@ public class NotifyServiceImpl implements NotifyService {
     }
     
     
-    @Override
-    public Map<EventType, Notify> getSnoozeNotify(String tripId, String snoozeduration ,  EventType[] eventTypeArr) throws Exception {
-        Map<EventType, Notify> map = new HashMap<>();
-        Session session = null;
-        Transaction transaction = null;
-
-        try {
-            session = sessionFactory.getCurrentSession();
-            transaction = session.beginTransaction();
-
-            for (EventType eventType : eventTypeArr) {
-                Notify notify = notifyDao.findSingle(
-                        "SELECT e FROM " + Notify.class.getSimpleName() + " e " +
-                                "WHERE e.tripId = :tripId " +
-                                "AND e.eventType = :eventType ",
-                               
-                        new AbstractDao.Order[]{new AbstractDao.Order("e.date",DESC)},
-                        new AbstractDao.StrParam("tripId", tripId),
-                        new AbstractDao.StrParam("eventType", eventType.name()));
-                       
-                if (notify != null) map.put(eventType, notify);
-            }
-
-            transaction.commit();
-            transaction = null;
-            return map;
-        } finally {
-            if (transaction != null && !transaction.wasCommitted()) transaction.rollback();
-            if (session != null && session.isOpen()) session.close();
-        }
+    public List<Notify> listSnoozed(String tripId) throws Exception
+    {
+    	List<Notify> list=new ArrayList<>();
+    	   Session session = null;
+           Transaction transaction = null;
+    	 try {
+             session = sessionFactory.getCurrentSession();
+             transaction = session.beginTransaction();
+             //select * from app_fd_Notify where c_resolveStatus= 'SNOOZED' and (TO_SECONDS(now())/60)-(TO_SECONDS(dateCreated)/60)>c_snoozeduration and c_read_status!=1
+            list= notifyDao.find("SELECT e FROM " + Notify.class.getSimpleName() + " e " +
+            		 "WHERE e.tripId = :tripId " +
+            " AND e.status= 'SNOOZED' AND (TO_SECONDS(now())/60)-(TO_SECONDS(e.handleDate)/60)> e.snoozeduration AND  e.read_status is null"
+            		 	,         new AbstractDao.Order[]{new AbstractDao.Order("e.date",DESC)},
+                     new AbstractDao.StrParam("tripId", tripId));
+           
+             transaction.commit();
+             transaction = null;
+             return list;
+         } finally {
+             if (transaction != null && !transaction.wasCommitted()) transaction.rollback();
+             if (session != null && session.isOpen()) session.close();
+         }
     }
+    
+   
 
     @Override
+	public Notify getLastNotification(String tripId, EventType eventType, String ghtVehicleId) throws Exception {
+    	 Session session = null;
+         Transaction transaction = null;
+
+         try {
+             session = sessionFactory.getCurrentSession();
+             transaction = session.beginTransaction();
+
+         
+                 Notify notify = notifyDao.findSingle(
+                         "SELECT e FROM " + Notify.class.getSimpleName() + " e " +
+                                 "WHERE e.tripId = :tripId " +
+                                 "AND  e.ghtVehicleId = :ghtVehicleId " +
+                                 "AND e.eventType = :eventType ",
+                         new AbstractDao.Order[]{new AbstractDao.Order("e.date", DESC)},
+                         new AbstractDao.StrParam("tripId", tripId),
+                         new AbstractDao.StrParam("ghtVehicleId", ghtVehicleId),
+                         new AbstractDao.StrParam("eventType", eventType.name()));
+             
+             transaction.commit();
+             transaction = null;
+             return notify;
+         } finally {
+             if (transaction != null && !transaction.wasCommitted()) transaction.rollback();
+             if (session != null && session.isOpen()) session.close();
+         }
+	}
+
+	@Override
     public void save(Collection<Notify> notifyList) {
         if (notifyList == null || notifyList.size() == 0) return;
 

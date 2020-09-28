@@ -211,9 +211,9 @@ public class LogServiceImpl implements LogService {
     
     //New Nethod for Snooze  Alert Update
     
-    /*
+    
      @Override
-    public String getLastLogDetails(String tripId) throws Exception {
+    public Log getLastLogDetails(String tripId,String vehicleId) throws Exception {
         Session session = null;
         Transaction transaction = null;
         try {
@@ -222,9 +222,14 @@ public class LogServiceImpl implements LogService {
 
             Log res = logDao.findSingle(
                     "SELECT e FROM " + Log.class.getSimpleName() + " e " +
-                            "WHERE e.tripId = :tripId",
+                            "WHERE e.tripId = :tripId"+
+                    		" And e.vehicleId=:vehicleId "
+                    		  + "AND e.lat IS NOT NULL "
+                              + "AND e.lng IS NOT NULL ",
+                       
                     new AbstractDao.Order[]{new AbstractDao.Order("e.date", DESC)},
-                    new AbstractDao.StrParam("tripId", tripId));
+                    new AbstractDao.StrParam("tripId", tripId),
+                    new AbstractDao.StrParam("vehicleId", vehicleId));
 
             transaction.commit();
             transaction = null;
@@ -235,7 +240,7 @@ public class LogServiceImpl implements LogService {
             if (session != null && session.isOpen()) session.close();
         }
     }
-     */
+     
 
     @Override
     public boolean checkActiveRecords(String tripId,String vehicleId) {

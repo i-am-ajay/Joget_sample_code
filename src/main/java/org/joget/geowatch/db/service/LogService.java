@@ -22,6 +22,9 @@ public interface LogService {
     Date getLastLogDate(String lifeTripId) throws Exception;
 
     List<LogJson> list(String tripId, Date date, User user, Integer offset, Integer limit) throws Exception;
+    
+    
+    Log getLastLogDetails(String tripId,String vehicleId) throws Exception ;
 
     LogJson get(String idLog, User currentUser) throws Exception;
     

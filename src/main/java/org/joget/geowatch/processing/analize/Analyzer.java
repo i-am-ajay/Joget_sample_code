@@ -96,6 +96,19 @@ public abstract class Analyzer {
     public void analyze(EventType eventType, AnalyzeTripContext tripContext, LogData logData) throws Exception{
         analyze(eventType, tripContext, logData.getLogList());
     }
+    
+    
+    
+    public static void analyze( Trip trip,EventType eventType,GeofenceService geofenceService, Log log) throws Exception {
+    	
+    	  AnalyzeTripContext tripContext = getTripContext(trip);
+          
+          tripContext.setBlackListed(geofenceService.listgeotype("BLACKLIST_ZONE"));
+          tripContext.setAlertzones(geofenceService.listgeotype("ALERT_ZONE"));
+          tripContext.setAllalertzones(geofenceService.list(""));
+          ANALYZES.get(eventType).analyze(eventType,tripContext,log);
+        
+    }
 
     public void analyze(EventType eventType, AnalyzeTripContext tripContext, List<Log> logList) throws Exception {
         for (Log log : logList) {

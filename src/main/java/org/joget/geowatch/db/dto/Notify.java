@@ -139,8 +139,20 @@ public class Notify implements Serializable {
     private String snoozeduration;
     
     
+    @Column(name = "c_read_status")
+    @Type(type = "text")
+    private String read_status;
+    
 
-    public String getSnoozeduration() {
+    public String getRead_status() {
+		return read_status;
+	}
+
+	public void setRead_status(String read_status) {
+		this.read_status = read_status;
+	}
+
+	public String getSnoozeduration() {
 		return snoozeduration;
 	}
     

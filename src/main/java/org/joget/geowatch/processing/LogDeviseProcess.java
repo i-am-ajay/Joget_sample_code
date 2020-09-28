@@ -95,7 +95,7 @@ public class LogDeviseProcess {
         
         
         //New mwthod for snooze alert
-        checkSnoozeAlert(trip);
+       
 
         VehicleProcessData vehicleProcessData = ghtLogProcessing.process(trip);
         Analyzer.analyze(vehicleProcessData,geofenceService);
@@ -109,7 +109,15 @@ public class LogDeviseProcess {
 
         notifyProcess.process(vehicleProcessData);
         saveAndUpdateNotify(vehicleProcessData);
-
+        try {
+        checkSnoozeAlert(trip);
+        }
+        catch (Exception e) {
+			// TODO: handle exception
+        	
+        	LogUtil.info(TAG, "Error in the catch snooze method");
+        	e.printStackTrace();
+		}
     }
 
     protected void saveLog(VehicleProcessData vehicleProcessData) throws Exception {
@@ -133,6 +141,36 @@ public class LogDeviseProcess {
     	//Check code in package "org.joget.geowatch.db.service.impl" for below impl 
     	//NotifyServiceImpl
     	//LogServiceImpl
+    	List<Notify> snoozedTrips=notifyService.listSnoozed(trip.getId());
+    	System.out.println("Total Snoozed ----"+snoozedTrips.size());
+    	for (Iterator iterator = snoozedTrips.iterator(); iterator.hasNext();) {
+			Notify notify = (Notify) iterator.next();
+			System.out.println("Snoozed notification "+notify.getId());
+			Notify oldnotify=notifyService.getLastNotification(notify.getTripId(), notify.getEventType(), notify.getGhtVehicleId());
+			if(oldnotify!=null)
+			{
+				if(oldnotify.getId().equals(notify.getId())==false)
+				{
+					//New notification is already added for the same device so no action is needed .
+					LogUtil.info(LogDeviseProcess.TAG, "Notification is already generated");
+					
+					continue;
+				}
+			}
+			
+			Log log=logService.getLastLogDetails(notify.getTripId(), notify.getVehicleId());
+			
+			LogUtil.info(LogDeviseProcess.TAG, "Recent logs are "+log);
+			//code to process the notification by analyzer
+			if(log!=null)
+			Analyzer.analyze(trip, notify.getEventType(), geofenceService, log);
+			
+			LogUtil.info(LogDeviseProcess.TAG, "Recent logs are null analyzer is not called..");
+			notify.setRead_status("1");
+		}
+    	
+    	notifyService.update(snoozedTrips);
+    
         
     }
 
