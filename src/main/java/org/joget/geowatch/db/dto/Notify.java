@@ -54,7 +54,7 @@ import static org.joget.geowatch.type.NotifyType.NOTICE;
  */
 @Entity
 @Table(name = "app_fd_Notify")
-public class Notify implements Serializable {
+public class Notify implements Serializable{
 
     @Id
     @GeneratedValue(generator = "uuid")
@@ -644,6 +644,43 @@ public class Notify implements Serializable {
                 throw new IllegalArgumentException("Can't resolve eventSubType: " + event.getEventSubType());
         }
     }
+
+	public Notify copy()  {
+    	// TODO Auto-generated method stub
+    	
+    	Notify item=new Notify();
+    	   item.eventType = this.getEventType();
+           item.eventSubType = this.getEventSubType();
+
+           item.notifyType = this.notifyType;
+           item.description = this.description;
+
+           item.dateCreated = new Date();
+           item.dateModified = new Date();
+           item.date = new Date();
+           item.event1Id = this.event1Id;
+           item.log1Id = this.log1Id;
+           item.event2Id = this.event2Id;
+         
+           item.log2Id = this.log2Id;
+           item.status = NEW;
+           item.note = null;
+
+           item.trip = this.trip;
+           item.tripId = this.tripId;
+
+ 
+           item.vehicleId = this.getVehicleId();
+
+     
+           item.ghtVehicleId = this.getGhtVehicleId();
+
+           item.handler = null;
+           item.handleDate = null;
+           
+    	return item;
+    }
+   
 
     @Override
     public String toString() {

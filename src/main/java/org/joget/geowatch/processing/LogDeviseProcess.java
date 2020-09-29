@@ -163,7 +163,15 @@ public class LogDeviseProcess {
 			LogUtil.info(LogDeviseProcess.TAG, "Recent logs are "+log);
 			//code to process the notification by analyzer
 			if(log!=null)
-			Analyzer.analyze(trip, notify.getEventType(), geofenceService, log);
+			{
+				Analyzer.analyze(trip, notify.getEventType(), geofenceService, log);
+			}else
+			{
+				//as there is no active logs and no information 
+				Notify newAlert=notify.copy();
+			//	n.se
+				notifyService.save(newAlert);
+			}
 			
 			LogUtil.info(LogDeviseProcess.TAG, "Recent logs are null analyzer is not called..");
 			notify.setRead_status("1");
