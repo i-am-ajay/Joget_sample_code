@@ -90,9 +90,10 @@ public class NotifyServiceImpl implements NotifyService {
              //select * from app_fd_Notify where c_resolveStatus= 'SNOOZED' and (TO_SECONDS(now())/60)-(TO_SECONDS(dateCreated)/60)>c_snoozeduration and c_read_status!=1
             list= notifyDao.find("SELECT e FROM " + Notify.class.getSimpleName() + " e " +
             		 "WHERE e.tripId = :tripId " +
-            " AND e.status= 'SNOOZED' AND (TO_SECONDS(now())/60)-(TO_SECONDS(e.handleDate)/60)> e.snoozeduration AND  e.read_status is null"
+            " AND e.status= 'SNOOZED' AND (TO_SECONDS(:currentdate)/60)-(TO_SECONDS(e.handleDate)/60)> e.snoozeduration AND  e.read_status is null"
             		 	,         new AbstractDao.Order[]{new AbstractDao.Order("e.date",DESC)},
-                     new AbstractDao.StrParam("tripId", tripId));
+                     new AbstractDao.StrParam("tripId", tripId),
+                     new AbstractDao.DateParam("currentdate",new Date()));
            
              transaction.commit();
              transaction = null;

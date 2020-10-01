@@ -142,10 +142,10 @@ public class LogDeviseProcess {
     	//NotifyServiceImpl
     	//LogServiceImpl
     	List<Notify> snoozedTrips=notifyService.listSnoozed(trip.getId());
-    	System.out.println("Total Snoozed ----"+snoozedTrips.size());
+    	LogUtil.info(LogDeviseProcess.TAG, "Total Snoozed ----"+snoozedTrips.size());
     	for (Iterator iterator = snoozedTrips.iterator(); iterator.hasNext();) {
 			Notify notify = (Notify) iterator.next();
-			System.out.println("Snoozed notification "+notify.getId());
+			LogUtil.info(LogDeviseProcess.TAG, "Snoozed notification "+notify.getId());
 			Notify oldnotify=notifyService.getLastNotification(notify.getTripId(), notify.getEventType(), notify.getGhtVehicleId());
 			if(oldnotify!=null)
 			{
@@ -153,7 +153,7 @@ public class LogDeviseProcess {
 				{
 					//New notification is already added for the same device so no action is needed .
 					LogUtil.info(LogDeviseProcess.TAG, "Notification is already generated");
-					
+					notify.setRead_status("1");
 					continue;
 				}
 			}
@@ -169,11 +169,11 @@ public class LogDeviseProcess {
 			{
 				//as there is no active logs and no information 
 				Notify newAlert=notify.copy();
-			//	n.se
+				LogUtil.info(LogDeviseProcess.TAG, "Recent logs are null analyzer is not called..");
 				notifyService.save(newAlert);
 			}
 			
-			LogUtil.info(LogDeviseProcess.TAG, "Recent logs are null analyzer is not called..");
+			
 			notify.setRead_status("1");
 		}
     	

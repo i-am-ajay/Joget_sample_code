@@ -111,7 +111,7 @@ public class NotifyProcess {
                 
                 if(lastNotify!=null)
                 {
-                	System.out.println("Old Notification FOUND WITH STATUS ---"+lastNotify.getStatus());
+                	//System.out.println("Old Notification FOUND WITH STATUS ---"+lastNotify.getStatus());
                 	if(lastNotify.getStatus().equals(NotifyResolveStatusType.SNOOZED))
                 	{
                 		//SNOOZED NOTIFICATION IS FOUND
