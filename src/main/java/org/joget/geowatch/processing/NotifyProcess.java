@@ -1,5 +1,6 @@
 package org.joget.geowatch.processing;
 
+import org.joget.commons.util.LogUtil;
 import org.joget.geowatch.db.dto.Event;
 import org.joget.geowatch.db.dto.Notify;
 import org.joget.geowatch.db.dto.type.NotifyResolveStatusType;
@@ -116,11 +117,12 @@ public class NotifyProcess {
                 	{
                 		//SNOOZED NOTIFICATION IS FOUND
                 		
-                		long tDuration = event.getDate().getTime() - notify.getDate().getTime();
+                		long tDuration = event.getDate().getTime() - lastNotify.getDate().getTime();
+                		LogUtil.info(TAG, "SNOOZED EVENT DIFF"+tDuration);
                         if (tDuration > 0) 
                         {
                         long duration = TimeUnit.MILLISECONDS.toMinutes(tDuration);
-                        
+                        LogUtil.info(TAG, "SNOOZED EVENT DURATION"+duration);
                         if(duration<lastNotify.getSnoozedurationLong()) {
                         	//Break the loop because its snoozed.. 
                         	continue;
