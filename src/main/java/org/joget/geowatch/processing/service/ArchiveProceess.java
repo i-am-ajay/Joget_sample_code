@@ -5,6 +5,9 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Calendar;
+import java.util.Date;
+
 import javax.sql.DataSource;
 
 import org.joget.apps.app.service.AppUtil;
@@ -17,7 +20,20 @@ public class ArchiveProceess implements Runnable{
 	public void run() {
 		// TODO Auto-generated method stub
 		
-		LogUtil.debug(TAG,"Archive is running");
+		
+		LogUtil.info(TAG,"Archive is running");
+		 Date d1 = new Date();
+
+		    Calendar c1 = Calendar.getInstance();
+		    c1.setTime(d1);
+		    System.out.println(c1.get(Calendar.DAY_OF_WEEK));
+
+		    if ((c1.get(Calendar.DAY_OF_WEEK) == Calendar.SATURDAY) 
+		            || (c1.get(Calendar.DAY_OF_WEEK) == Calendar.SUNDAY)) 
+		    {
+		    	LogUtil.debug(TAG,"Archive is running-- it is weekend ");
+		    
+		    	
 		 Connection con = null;
 		 try {
 	            // retrieve connection from the default datasource
@@ -30,11 +46,11 @@ public class ArchiveProceess implements Runnable{
 	                	LogUtil.info(TAG, stmt.toString());
 	                 stmt.executeUpdate();
 	                 
-	                 PreparedStatement stmt2 = con.prepareStatement("Insert into app_fd_Log_backup  (select * from app_fd_Log where dateCreated<date_add(now(), INTERVAL -180 day) limit 1000)");
+	                 PreparedStatement stmt2 = con.prepareStatement("Insert into app_fd_Log_backup  (select * from app_fd_Log where dateCreated<date_add(now(), INTERVAL -180 day) order by dateCreated desc limit 1000)");
 	                 LogUtil.info(TAG, stmt2.toString());
 	                 stmt2.executeUpdate();
 	                 
-	                 PreparedStatement stmt3 = con.prepareStatement("delete from app_fd_Log where id in (select id from app_fd_Log_backup) limit 1000");
+	                 PreparedStatement stmt3 = con.prepareStatement("delete from app_fd_Log where id in (select id from app_fd_Log_backup where app_fd_Log_backup.dateCreated<date_add(now(), INTERVAL -180 day) order by dateCreated desc) limit 1000");
 	                 LogUtil.info(TAG, stmt3.toString());
 	                 stmt3.executeUpdate();
 	                
@@ -49,7 +65,11 @@ public class ArchiveProceess implements Runnable{
 	                }
 	            } catch(SQLException e) {/* ignored */}
 	        }
-		 
+		 }
+		  else
+		    {
+			  LogUtil.info(TAG,"Archive not executed its weekday");
+		    }
 		
 	}
 	
