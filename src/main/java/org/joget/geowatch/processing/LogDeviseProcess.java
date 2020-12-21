@@ -421,13 +421,14 @@ public class LogDeviseProcess {
             body = ResourceBundleUtil.getMessage(bodyKey, body, new Locale(user.getLocale()));
         if (isEmpty(body)) return;
         
-        System.out.println("Body :"+body);
+       // System.out.println("Body :"+body);
       
     	 
 
         JogetUtil.Email email = new JogetUtil.Email(
                 userId,
                 trip.getC__id(),
+                trip.getRequesterDepartmentId(),
                 ghtVehicle != null ? ghtVehicle.getId() : "",
                 eventDateStr,
                 isNoneEmpty(notify.getDescription()) ? notify.getDescription() : "",

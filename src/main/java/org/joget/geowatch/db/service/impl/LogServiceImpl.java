@@ -300,7 +300,7 @@ public class LogServiceImpl implements LogService {
                 logs = logDao.find(
                         "SELECT e FROM " + Log.class.getSimpleName() + " e " +
                                 "WHERE e.tripId = :tripId",
-                        new AbstractDao.Order[]{new AbstractDao.Order("e.date", ASC)},
+                        new AbstractDao.Order[]{new AbstractDao.Order("e.date", DESC)},
                         new AbstractDao.Page(offset, limit),
                         new AbstractDao.StrParam("tripId", tripId));
             }

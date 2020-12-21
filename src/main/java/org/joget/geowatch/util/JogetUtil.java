@@ -48,15 +48,17 @@ public class JogetUtil {
     public static class Email {
         String sendTo;
         String tripId;
+        String requesterDepartment;
         String vehicleId;
         String eventDate;
         String description;
         String body;
         String geofenceName;
 
-        public Email(String sendTo, String tripId, String vehicleId, String eventDate, String description, String body, String geofenceName) {
+        public Email(String sendTo, String tripId,String requesterDepartment , String vehicleId, String eventDate, String description, String body, String geofenceName) {
             this.sendTo = sendTo;
             this.tripId = tripId;
+            this.requesterDepartment = requesterDepartment;
             this.vehicleId = vehicleId;
             this.eventDate = eventDate;
             this.description = description;
@@ -68,6 +70,7 @@ public class JogetUtil {
             Map<String, String> map = new HashMap();
             map.put("sendTo", sendTo);
             map.put("tripId", tripId);
+            map.put("requesterDepartment", requesterDepartment);          
             map.put("vehicleId", vehicleId);
             map.put("eventDate", eventDate);
             map.put("description", description);
