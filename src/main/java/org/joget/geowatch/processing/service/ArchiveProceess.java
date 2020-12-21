@@ -46,11 +46,11 @@ public class ArchiveProceess implements Runnable{
 	                	LogUtil.info(TAG, stmt.toString());
 	                 stmt.executeUpdate();
 	                 
-	                 PreparedStatement stmt2 = con.prepareStatement("Insert into app_fd_Log_backup  (select * from app_fd_Log where dateCreated<date_add(now(), INTERVAL -180 day) order by dateCreated desc limit 1000)");
+	                 PreparedStatement stmt2 = con.prepareStatement("Insert IGNORE into app_fd_Log_backup  (select * from app_fd_Log where dateCreated<date_add(now(), INTERVAL -180 day) order by dateCreated limit 1000)");
 	                 LogUtil.info(TAG, stmt2.toString());
 	                 stmt2.executeUpdate();
 	                 
-	                 PreparedStatement stmt3 = con.prepareStatement("delete from app_fd_Log where id in (select id from app_fd_Log_backup where app_fd_Log_backup.dateCreated<date_add(now(), INTERVAL -180 day) order by dateCreated desc) limit 1000");
+	                 PreparedStatement stmt3 = con.prepareStatement("delete from app_fd_Log where id in (select id from app_fd_Log_backup where app_fd_Log_backup.dateCreated<date_add(now(), INTERVAL -180 day) order by dateCreated) limit 1000");
 	                 LogUtil.info(TAG, stmt3.toString());
 	                 stmt3.executeUpdate();
 	                
