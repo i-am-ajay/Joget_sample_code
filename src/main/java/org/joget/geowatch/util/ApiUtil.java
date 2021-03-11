@@ -71,8 +71,8 @@ public class ApiUtil {
             if (currentUser != null)
                 format.setTimeZone(getTimeZone(currentUser));
 
-            log.setDate(log.getServerDate());
-            bean.setDate(format.format(log.getServerDate()));
+          //  log.setDate(log.getServerDate());
+            bean.setDate(format.format(log.getDate()));
             bean.setDoor1State(log.getDoor1State());
             bean.setDoor2State(log.getDoor2State());
             bean.setDoor3State(log.getDoor3State());

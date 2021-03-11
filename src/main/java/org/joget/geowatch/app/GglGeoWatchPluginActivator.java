@@ -1,6 +1,7 @@
 package org.joget.geowatch.app;
 
 import org.joget.commons.util.LogUtil;
+import org.joget.geowatch.api.configuration.MapActivityApi;
 import org.joget.geowatch.api.configuration.MapApi;
 import org.joget.geowatch.db.service.impl.DateServiceImpl;
 import org.joget.geowatch.processing.service.ArchiveProceess;
@@ -39,6 +40,7 @@ public class GglGeoWatchPluginActivator implements BundleActivator {
             //Register plugin here
             registrationList = new ArrayList<>();
             registrationList.add(context.registerService(MapApi.class.getName(), new MapApi(), null));
+            registrationList.add(context.registerService(MapActivityApi.class.getName(), new MapActivityApi(), null));
 
             cancelInitFlag = false;
             new Thread(new InnitRunnable()).start();
