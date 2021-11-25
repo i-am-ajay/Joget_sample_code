@@ -186,19 +186,23 @@ public class LogDeviseProcess {
         LogData logData;
 
         logData = vehicleProcessData.getNewLogData(HAULIER);
+       
         if (logData != null && logData.getLogList() != null && logData.getLogList().size() > 0) {
+        	 LogUtil.info(LogDeviseProcess.TAG,"Logs Size HAULIER"+logData.getLogList().size());
             VehicleLastPositionInnerEntity haulierLastPosition = getLastPosition(logData.getLogList(), trip.getHaulierLastPosition());
             trip.setHaulierLastPosition(haulierLastPosition);
         }
 
         logData = vehicleProcessData.getNewLogData(TRAILER);
         if (logData != null && logData.getLogList() != null && logData.getLogList().size() > 0) {
+        	 LogUtil.info(LogDeviseProcess.TAG,"Logs Size TRAILER"+logData.getLogList().size());
             VehicleLastPositionInnerEntity haulierTrailerLastPosition = getLastPosition(logData.getLogList(), trip.getHaulierTrailerLastPosition());
             trip.setHaulierTrailerLastPosition(haulierTrailerLastPosition);
         }
 
         logData = vehicleProcessData.getNewLogData(RMO);
         if (logData != null && logData.getLogList() != null && logData.getLogList().size() > 0) {
+        	LogUtil.info(LogDeviseProcess.TAG,"Logs Size RMO"+logData.getLogList().size());
             VehicleLastPositionInnerEntity rmoLastPosition = getLastPosition(logData.getLogList(), trip.getRmoLastPosition());
             trip.setRmoLastPosition(rmoLastPosition);
         }

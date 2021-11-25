@@ -13,6 +13,7 @@ import org.joget.geowatch.db.service.LogService;
 import org.joget.geowatch.processing.dto.VehicleProcessData;
 import org.joget.geowatch.util.ApiUtil;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
@@ -45,6 +46,7 @@ public class LogServiceImpl implements LogService {
     //	LogUtil.info(this.getClass().getName(), logCollection.toString());
         if (logCollection == null || logCollection.size() == 0) return;
 
+        ArrayList<Log> toRemove=new ArrayList<>();
         
         for (Log log : logCollection) {
             try {
@@ -53,8 +55,17 @@ public class LogServiceImpl implements LogService {
                     throw new RuntimeException("I can't save log: " + log);
             } catch (Exception e) {
                 LogUtil.error(TAG, e, "ERROR.");
+                LogUtil.info(TAG,"Adding to remove list"+log.getId());
+                //Code to add the logs in the removal list
+                toRemove.add(log);
             }
         }
+        LogUtil.info(TAG,"Before "+logCollection.size()+" Objects from collection");
+        //code to remove the logs from the main collection.So they didn't get processed in the next part
+       LogUtil.info(TAG,"Removing "+toRemove.size()+" Objects from collection");
+        logCollection.removeAll(toRemove);
+        
+        LogUtil.info(TAG,"After "+logCollection.size()+" Objects from collection");
     }
 
     public String save(Log log) throws Exception {
@@ -74,6 +85,7 @@ public class LogServiceImpl implements LogService {
             if(exist!=null)
             {
             	LogUtil.debug(TAG, "Already exist! "+log.getId());
+            	
             	return "Already exist! "+log.getId();
             }
             }
