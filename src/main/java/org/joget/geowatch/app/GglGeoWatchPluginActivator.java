@@ -139,7 +139,6 @@ public class GglGeoWatchPluginActivator implements BundleActivator {
             LogUtil.error(TAG, t, "GGL PLUGIN. DESTROY ERROR");
         }
     }
-
     public static void sendEmail(JogetUtil.Email email) throws InterruptedException {
         emailSender.put(email);
     }
