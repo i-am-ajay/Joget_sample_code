@@ -4,6 +4,7 @@ import org.joget.apps.form.model.Element;
 import org.joget.apps.form.model.FormData;
 import org.joget.apps.form.model.FormRow;
 import org.joget.apps.form.model.FormRowSet;
+import org.joget.commons.util.LogUtil;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
@@ -17,9 +18,13 @@ import java.time.format.DateTimeFormatter;
 
 
 public class StoreBinder {
-    static String transactionUrl = "http://omuatap.oasiserp.com:8048/webservices/rest/oicmtlint/mtl_transactions_interface/";
-    static String qtyUrl = "http://omuatap.oasiserp.com:8048/webservices/rest/oiconhand/query_quantities/";
-    static String costUrl = "http://omuatap.oasiserp.com:8048/webservices/rest/oicitemcost/get_item_cost/";
+    //static String transactionUrl = "http://omuatap.oasiserp.com:8048/webservices/rest/oicmtlint/mtl_transactions_interface/";
+    //static String qtyUrl = "http://omuatap.oasiserp.com:8048/webservices/rest/oiconhand/query_quantities/";
+    //static String costUrl = "http://omuatap.oasiserp.com:8048/webservices/rest/oicitemcost/get_item_cost/";
+    static String authorization = "#envVariable.ommrestapiauthentication#";
+    static String transactionUrl = "#envVariable.restAPIMRIssueQanty#";
+    static String qtyUrl = "#envVariable.restAPIQOH#";
+    static String costUrl = "#envVariable.restAPIGetItemCost#";
 
     public static FormRowSet store(Element element, FormRowSet rows, FormData formData) throws IOException {
         rows.setMultiRow(true);
@@ -28,11 +33,12 @@ public class StoreBinder {
         // set date string
         LocalDate date = LocalDate.now();
         String dateStr = date.format(DateTimeFormatter.ofPattern("dd-MMM-yyyy"));
+        LogUtil.info("Job No","#requestParam.jobOrderno#");
         for (FormRow row : rows) {
             String inventoryId = row.getProperty("INVENTORY_ITEM_ID");
             String transactionQty = row.getProperty("requiredToReserveQty");
             String transactionUom = row.getProperty("primaryUOM");
-            String subInventory = row.getProperty("subInventoryId");
+            String subInventory = row.getProperty("subinventoryID");
             String transactionCost = jsonCallForTransactionCost(inventoryId);
             String availableQty = jsonCallForQty(inventoryId,subInventory);
             double availQty = 0.0;
@@ -45,24 +51,24 @@ public class StoreBinder {
             }
             double result = availQty - transactionQtyNum;
             if( availQty > 0.0 && result >= 0.0 ){
-                //if( availQty >= 0.0 ){
                 int mainStoreStatus = jsonCallToMainStore(inventoryId, "-".concat(transactionQty), transactionCost, transactionUom, subInventory, dateStr, "#requestParam.jobOrderno#"," 2104");
                 if(mainStoreStatus != 200){
                     row.setProperty("requiredToReserveQty","Main Store Inventory Not Updated. Item can't be reserved.");
                     row.setProperty("item_status","Not Reserved");
                 }
                 else {
+                    LogUtil.info("Transaction Qty ------------ ",transactionQty);
                     int subInventorystatus = jsonCallToSubInventory(inventoryId, transactionQty, transactionCost, transactionUom, "J-RESERVED", dateStr, "#requestParam.jobOrderno#", "2124");
                     if(subInventorystatus != 200){
                         row.setProperty("requiredToReserveQty","Sub-Inventory not update. Kindly contanct admin to reverse Main Inventory");
                         row.setProperty("item_status","Not Reserved");
                     }
                     else{
-                        row.setProperty("stockInHand",Double.toString(result));
+                        //row.setProperty("stockInHand",Double.toString(result));
                         row.setProperty("transactionCost",transactionCost);
                     }
                 }
-                row.setProperty("stockInHand",Double.toString(result));
+                //row.setProperty("stockInHand",Double.toString(result));
                 row.setProperty("transactionCost",transactionCost);
             }
             else{
@@ -73,6 +79,7 @@ public class StoreBinder {
         }
         FormDataDao formDataDao = (FormDataDao) AppUtil.getApplicationContext().getBean("formDataDao");
         formDataDao.saveOrUpdate("allocateStockItems", "ods_allocate_mat", rows);
+        LogUtil.info("Data Saved","Saved");
         return rows;
     }
 
@@ -82,7 +89,7 @@ public class StoreBinder {
         HttpURLConnection con = (HttpURLConnection) url.openConnection();
         con.setRequestMethod("POST");
         con.setRequestProperty("content-type", "application/json");
-        con.setRequestProperty("Authorization", "Basic aXQuYW1pdG06b3JhY2xlMTIzNA==");
+        con.setRequestProperty("Authorization", authorization);
         /* Payload support */
         con.setDoOutput(true);
         DataOutputStream out = new DataOutputStream(con.getOutputStream());
@@ -103,7 +110,7 @@ public class StoreBinder {
         out.writeBytes("             \"P_ORGANIZATION_ID\":\"142\",\n");
         out.writeBytes("             \"P_INVENTORY_ITEM_ID\":\""+inventoryId+"\",\n");
         out.writeBytes("             \"P_ONHAND_SOURCE\": \"2\",\n");
-        out.writeBytes("             \"SUBINVENTORY_CODE\":\""+subInventory+"\"  \n");
+        out.writeBytes("             \"P_SUBINVENTORY_CODE\":\""+subInventory+"\"  \n");
         out.writeBytes("        }\n");
         out.writeBytes("    }\n");
         out.writeBytes("}");
@@ -119,7 +126,6 @@ public class StoreBinder {
         }
         in.close();
         con.disconnect();
-        System.out.println("Response status: " + status);
         return parseJsonObject(content.toString(), "X_QOH");
     }
 
@@ -129,7 +135,7 @@ public class StoreBinder {
         HttpURLConnection con = (HttpURLConnection) url.openConnection();
         con.setRequestMethod("POST");
         con.setRequestProperty("content-type", "application/json");
-        con.setRequestProperty("Authorization", "Basic aXQudmlrYXNyYWk6b3JhY2xlMzIx");
+        con.setRequestProperty("Authorization", authorization);
 
         /* Payload support */
         con.setDoOutput(true);
@@ -164,7 +170,6 @@ public class StoreBinder {
         }
         in.close();
         con.disconnect();
-        System.out.println("Response status: " + status);
         return parseJsonObject(content.toString(), "GET_ITEM_COST");
     }
     // parse json output to get relevant records.
@@ -204,9 +209,9 @@ public class StoreBinder {
         URL url = new URL(transactionUrl);
         HttpURLConnection con = (HttpURLConnection) url.openConnection();
         con.setRequestMethod("POST");
-        con.setRequestProperty("Authorization", "Basic aXQuYW1pdG06b3JhY2xlMTIzNA==");
+        con.setRequestProperty("Authorization", authorization);
         con.setRequestProperty("Content-Type", "application/json");
-
+        LogUtil.info(subInventory+" Call", "Transaction Qty "+transactionQty+ " transaction type :"+transactionType);
         /* Payload support */
         con.setDoOutput(true);
         DataOutputStream out = new DataOutputStream(con.getOutputStream());
@@ -259,7 +264,7 @@ public class StoreBinder {
         }
         in.close();
         con.disconnect();
-        System.out.println("Response status: " + status);
+        LogUtil.info("Response status: ", ""+status);
         System.out.println(content.toString());
         return status;
     }

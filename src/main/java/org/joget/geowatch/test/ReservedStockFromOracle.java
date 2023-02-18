@@ -86,4 +86,4 @@ public class ReservedStockFromOracle {
     }
 }
 
-//ReservedStockFromOracle.load(element,primaryKey,formData);
+ReservedStockFromOracle.load(element,primaryKey,formData);

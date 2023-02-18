@@ -49,10 +49,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import javax.sql.DataSource;
 
-public class GridValue
+public class GridValue_old
 {
     public static FormRowSet saveGridRows(Element element, FormRowSet rows, FormData formData) throws SQLException, IOException, ClassNotFoundException {
-        Connection con;
         if (rows == null) {
             return null;
         }
@@ -356,8 +355,7 @@ public class GridValue
             }
             int status = 0;
             if(reservedStock == null){
-                // method to get oracle on hand qty, this call should be replaced with new method
-                String oracleStockInHand = qtyOnHandJsonCall(inventoryItemId,subInventory);
+                String oracleStockInHand = jsonCallForStockInHand(inventoryItemId,subInventory);
                 double stockInHandQty = 0.0;
                 if (oracleStockInHand != null && !oracleStockInHand.trim().matches("[a-zA-Z]*")) {
                     stockInHandQty = Double.parseDouble(oracleStockInHand);
@@ -367,7 +365,7 @@ public class GridValue
                 }
                 else {
                     String cost = jsonCallForTransactionCost(inventoryItemId);
-                    status = jsonCallToMainStore(inventoryItemId, "-".concat(quantityVal), cost, uom, subInventory,
+                    status = jsonCallToMainStore(inventoryItemId, "-".concat(quantityVal), uom, cost, subInventory,
                             dateStr, jobId, "2125");
                     if (status != 200) {
                         result = "Failed to Issue qty from "+subInventory+" sub-inventory";
@@ -379,15 +377,15 @@ public class GridValue
             else if(quantity > reservedStockQty){
                 quantity = quantity - reservedStockQty;
                 String cost = jsonCallForTransactionCost(inventoryItemId);
-                status = jsonCallToSubInventory(inventoryItemId,"-".concat(reservedStock),cost,uom,"J-RESERVED",
+                status = jsonCallToSubInventory(inventoryItemId,"-".concat(reservedStock),uom,cost,"J-RESERVED",
                         dateStr,jobId,"2125");
                 // deducted reserved qty and then call use unreserve stock
                 if(status != 200){
                     result = "Failed to Issue qty from J-Reserved sub-inventory";
                 }
                 else{
-                    // get stock in hand qty. this call should be replaced with new call
-                    String oracleStockInHand = qtyOnHandJsonCall(inventoryItemId,subInventory);
+                    // get stock in hand qty.
+                    String oracleStockInHand = jsonCallForStockInHand(inventoryItemId,subInventory);
                     double stockInHandQty = 0.0;
                     if (oracleStockInHand != null && !oracleStockInHand.trim().matches("[a-zA-Z]*")) {
                         stockInHandQty = Double.parseDouble(oracleStockInHand);
@@ -397,7 +395,7 @@ public class GridValue
                     }
                     else{
                         cost = jsonCallForTransactionCost(inventoryItemId);
-                        status = jsonCallToMainStore(inventoryItemId,"-".concat(Double.toString(quantity)),cost,uom,subInventory,
+                        status = jsonCallToMainStore(inventoryItemId,"-".concat(Double.toString(quantity)),uom,cost,subInventory,
                                 dateStr,jobId,"2125");
                         if(status != 200){
                             result = "Failed to Issue qty from "+ subInventory +" sub-inventory";
@@ -410,7 +408,7 @@ public class GridValue
             }
             else if(quantity <= reservedStockQty){
                 String cost = jsonCallForTransactionCost(inventoryItemId);
-                status = jsonCallToSubInventory(inventoryItemId,"-".concat(reservedStock),cost,uom,
+                status = jsonCallToSubInventory(inventoryItemId,"-".concat(reservedStock),uom,cost,
                         "J-RESERVED", dateStr,jobId,"2125");
                 // deducted reserved qty and then call use unreserve stock
                 if(status != 200){
@@ -482,50 +480,52 @@ public class GridValue
         public static String processColumn(Object name) {
             return (name == null ? "" : name.toString());
         }
-        // This method should be replaced by new api method
-        // Copy from here
 
-        public static String qtyOnHandJsonCall(String itemInventoryId, String subInventory) throws IOException {
-            String urlString = "#envVariable.restAPIQOHNEWURL#".concat(itemInventoryId).concat("/").concat(subInventory);
-            URL url = new URL(urlString);
+        public static String jsonCallForStockInHand(String inventoryItemId, String subInventory) throws IOException{
+            URL url = new URL(qtyUrl);
             HttpURLConnection con = (HttpURLConnection) url.openConnection();
-            con.setRequestMethod("GET");
+            con.setRequestMethod("POST");
+            con.setRequestProperty("content-type", "application/json");
+            con.setRequestProperty("Authorization", authorization);
+            /* Payload support */
+            con.setDoOutput(true);
+            DataOutputStream out = new DataOutputStream(con.getOutputStream());
+            out.writeBytes("{\n");
+            out.writeBytes("    \"QUERY_QUANTITIES_Input\": {\n");
+            out.writeBytes("        \"@xmlns\": \""+qtyUrl+"\",\n");
+            out.writeBytes("        \"RESTHeader\": {\n");
+            out.writeBytes("            \"@xmlns\": \"http://xmlns.oracle.com/apps/fnd/rest/header\",\n");
+            out.writeBytes("            \"Responsibility\": \"OMM_INVENTORY_USER\",\n");
+            out.writeBytes("            \"RespApplication\": \"INV\",\n");
+            out.writeBytes("            \"SecurityGroup\": \"STANDARD\",\n");
+            out.writeBytes("            \"NLSLanguage\": \"AMERICAN\",\n");
+            out.writeBytes("            \"Org_Id\": \"115\"\n");
+            out.writeBytes("        },\n");
+            out.writeBytes("        \"InputParameters\": {\n");
+            out.writeBytes("            \"P_API_VERSION_NUMBER\": \"1.0\",\n");
+            out.writeBytes("            \"P_INIT_MSG_LIST\": \"T\",\n");
+            out.writeBytes("             \"P_ORGANIZATION_ID\":\"142\",\n");
+            out.writeBytes("             \"P_INVENTORY_ITEM_ID\":\""+inventoryItemId+"\",\n");
+            out.writeBytes("             \"P_ONHAND_SOURCE\": \"2\",\n");
+            out.writeBytes("             \"P_SUBINVENTORY_CODE\":\""+subInventory+"\"  \n");
+            out.writeBytes("        }\n");
+            out.writeBytes("    }\n");
+            out.writeBytes("}");
+            out.flush();
+            out.close();
 
             int status = con.getResponseCode();
             BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
             String inputLine;
             StringBuffer content = new StringBuffer();
-            while((inputLine = in.readLine()) != null) {
+            while ((inputLine = in.readLine()) != null) {
                 content.append(inputLine);
             }
             in.close();
             con.disconnect();
-            String jsonString = content.toString();
-            JSONObject jsonObject = new JSONObject(jsonString);
-            JSONArray jsonArray = jsonObject.getJSONArray("items");
-            String reservedStock = processJsonArrayOracleQty(jsonArray, itemInventoryId);
-            return reservedStock;
+            System.out.println("Response status: " + status);
+            return parseJsonObject(content.toString(),"X_QOH");
         }
-
-        public static String processJsonArrayOracleQty(JSONArray array, String inventoryItemId){
-            String quantity = "0.0";
-            try {
-                for (int i = 0; i < array.length(); i++) {
-                    JSONObject obj = array.getJSONObject(i);
-                    String jsonInventoryId = Integer.toString(obj.getInt("inventory_item_id"));
-                    if (inventoryItemId.equals(jsonInventoryId)) {
-                        quantity = Double.toString(obj.getDouble("avai_to_trnasact_qty"));
-                        break;
-                    }
-                }
-            }
-            catch(Exception ex){
-                //LogUtil.error(this.getClass().getName(), ex, ex.getMessage());
-            }
-            return quantity;
-        }
-        // copy till here
-
 
         // get cost from oracle
         public static String jsonCallForTransactionCost(String inventoryId) throws IOException {

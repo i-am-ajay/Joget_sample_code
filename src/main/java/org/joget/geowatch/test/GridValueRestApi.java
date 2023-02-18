@@ -1,58 +1,34 @@
 package org.joget.geowatch.test;
 
+import org.joget.apps.app.service.AppUtil;
+import org.joget.apps.form.dao.FormDataDao;
+import org.joget.apps.form.model.*;
+import org.joget.apps.form.service.FormUtil;
+import org.joget.commons.util.LogUtil;
+import org.joget.commons.util.UuidGenerator;
+import org.json.JSONObject;
+
+import javax.sql.DataSource;
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import javax.sql.DataSource;
-import org.joget.apps.app.service.AppUtil;
-import org.joget.apps.form.model.Form;
-import org.joget.apps.form.model.Element;
-import org.joget.apps.form.model.FormData;
-import org.joget.apps.form.model.FormRow;
-import org.joget.apps.form.model.FormRowSet;
-import org.joget.apps.form.service.FormUtil;
-import org.joget.commons.util.UuidGenerator;
-import org.joget.apps.form.dao.FormDataDao;
-import org.joget.apps.form.model.*;
-import org.joget.apps.form.lib.*;
-import org.joget.apps.form.service.*;
 import java.sql.*;
-import org.apache.commons.collections.SequencedHashMap;
-
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
-import org.joget.commons.util.LogUtil;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
-import java.util.List;
-
 import java.util.HashMap;
-import org.joget.apps.app.service.AppUtil;
-import org.joget.workflow.model.service.WorkflowManager;
-import org.joget.commons.util.LogUtil;
-import org.json.JSONArray;
-import org.json.JSONObject;
+import java.util.Iterator;
+import java.util.Map;
 
 //new
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import javax.sql.DataSource;
 
-public class GridValue
+
+public class GridValueRestApi
 {
     public static FormRowSet saveGridRows(Element element, FormRowSet rows, FormData formData) throws SQLException, IOException, ClassNotFoundException {
-        Connection con;
         if (rows == null) {
             return null;
         }
@@ -274,6 +250,9 @@ public class GridValue
             Iterator i= newRecord.iterator(); // Iterating grid rows
             while (i.hasNext()) {
                 FormRow formRow = (FormRow) i.next();
+                /*Insert new values***/
+                System.out.println("****Enter 3 Issue Quantity-1***********");
+
                 FormRow row = new FormRow();
                 String uuid = UuidGenerator.getInstance().getUuid();
                 row.setDateCreated(currentDate);
@@ -289,13 +268,30 @@ public class GridValue
                 row.setProperty("part_no", part_no);
                 row.setProperty("wofk", wofk);
 
-                //row.setProperty("fg_quantityRequired", fg_quantityRequired);
+                row.setProperty("lbbitemCode", lbbitemCode);
+                row.setProperty("cbbitemCode", cbbitemCode);
+                row.setProperty("noofbar_lbb", noofbar_lbb);
+                row.setProperty("noofbar_cb", noofbar_cb);
+
+
+                row.setProperty("lbb_weight", lbb_weight);
+                row.setProperty("cb_weight", cb_weight);
+                row.setProperty("coilsItemCode", coilsItemCode);
+                row.setProperty("fg_quantityRequired", fg_quantityRequired);
+
+                row.setProperty("totallbbCount", totallbbCount);
+                row.setProperty("totalcbCount", totalcbCount);
+                row.setProperty("total_lbb_weight", total_lbb_weight);
+                row.setProperty("total_cb_weight", total_cb_weight);
+
 
                 row.setProperty("additionalStatus", additionalStatus);
                 row.setProperty("quantitytoscheduled", quantitytoscheduled);
-
-                row.setProperty("mrType", "NONSTD");
+                row.setProperty("total_lbb_weight", total_lbb_weight);
+                row.setProperty("total_cb_weight", total_cb_weight);
+                row.setProperty("mrType", "STD");
                 row.setProperty("freezeMaterialMgm","Y");
+                //row.putAll(formRow);
 
                 row.setProperty("category", processColumn(formRow.get("category")));
                 row.setProperty("item_code", processColumn(formRow.get("item_code")));
@@ -345,19 +341,14 @@ public class GridValue
             String result = "Issued";
             double quantity = Double.parseDouble(quantityVal);
             // call to get reserved qty from
-            String jsonString = getReserveStock(jobId,inventoryItemId);
-            JSONObject jsonObject = new JSONObject(jsonString);
-            JSONArray jsonArray = jsonObject.getJSONArray("items");
-            String reservedStock = processJsonArray(jsonArray, inventoryItemId);
-
+            String reservedStock = getReservedQtyFromOracle(jobId,itemCode);
             double reservedStockQty = 0.0;
             if (reservedStock != null && !reservedStock.trim().matches("[a-zA-Z]*")) {
                 reservedStockQty = Double.parseDouble(reservedStock);
             }
             int status = 0;
             if(reservedStock == null){
-                // method to get oracle on hand qty, this call should be replaced with new method
-                String oracleStockInHand = qtyOnHandJsonCall(inventoryItemId,subInventory);
+                String oracleStockInHand = jsonCallForStockInHand(inventoryItemId,subInventory);
                 double stockInHandQty = 0.0;
                 if (oracleStockInHand != null && !oracleStockInHand.trim().matches("[a-zA-Z]*")) {
                     stockInHandQty = Double.parseDouble(oracleStockInHand);
@@ -367,7 +358,7 @@ public class GridValue
                 }
                 else {
                     String cost = jsonCallForTransactionCost(inventoryItemId);
-                    status = jsonCallToMainStore(inventoryItemId, "-".concat(quantityVal), cost, uom, subInventory,
+                    status = jsonCallToMainStore(inventoryItemId, "-".concat(quantityVal), uom, cost, subInventory,
                             dateStr, jobId, "2125");
                     if (status != 200) {
                         result = "Failed to Issue qty from "+subInventory+" sub-inventory";
@@ -379,15 +370,15 @@ public class GridValue
             else if(quantity > reservedStockQty){
                 quantity = quantity - reservedStockQty;
                 String cost = jsonCallForTransactionCost(inventoryItemId);
-                status = jsonCallToSubInventory(inventoryItemId,"-".concat(reservedStock),cost,uom,"J-RESERVED",
+                status = jsonCallToSubInventory(inventoryItemId,"-".concat(reservedStock),uom,cost,"J-RESERVED",
                         dateStr,jobId,"2125");
                 // deducted reserved qty and then call use unreserve stock
                 if(status != 200){
                     result = "Failed to Issue qty from J-Reserved sub-inventory";
                 }
                 else{
-                    // get stock in hand qty. this call should be replaced with new call
-                    String oracleStockInHand = qtyOnHandJsonCall(inventoryItemId,subInventory);
+                    // get stock in hand qty.
+                    String oracleStockInHand = jsonCallForStockInHand(inventoryItemId,subInventory);
                     double stockInHandQty = 0.0;
                     if (oracleStockInHand != null && !oracleStockInHand.trim().matches("[a-zA-Z]*")) {
                         stockInHandQty = Double.parseDouble(oracleStockInHand);
@@ -397,7 +388,7 @@ public class GridValue
                     }
                     else{
                         cost = jsonCallForTransactionCost(inventoryItemId);
-                        status = jsonCallToMainStore(inventoryItemId,"-".concat(Double.toString(quantity)),cost,uom,subInventory,
+                        status = jsonCallToMainStore(inventoryItemId,"-".concat(Double.toString(quantity)),uom,cost,subInventory,
                                 dateStr,jobId,"2125");
                         if(status != 200){
                             result = "Failed to Issue qty from "+ subInventory +" sub-inventory";
@@ -410,8 +401,8 @@ public class GridValue
             }
             else if(quantity <= reservedStockQty){
                 String cost = jsonCallForTransactionCost(inventoryItemId);
-                status = jsonCallToSubInventory(inventoryItemId,"-".concat(reservedStock),cost,uom,
-                        "J-RESERVED", dateStr,jobId,"2125");
+                status = jsonCallToSubInventory(inventoryItemId,"-".concat(reservedStock),uom,cost,"J-RESERVED",
+                        dateStr,jobId,"2125");
                 // deducted reserved qty and then call use unreserve stock
                 if(status != 200){
                     result = "Failed to Issue qty from J-Reserved sub-inventory";
@@ -421,111 +412,86 @@ public class GridValue
             return result;
         }
 
-        public static String getReserveStock(String jobNo, String inventoryItemId) throws IOException {
-            String itemUrl = "#envVariable.restReservedStockItemWise#";
-            String jobUrl = "#envVariable.restReservedStockJobWise#";
-            URL url = null;
-            if(jobNo != null && !jobNo.equals("")) {
-                url = new URL(jobUrl.concat(jobNo));
-            }
-            else{
-                url = new URL(itemUrl.concat(inventoryItemId));
-            }
-
-            HttpURLConnection con = (HttpURLConnection) url.openConnection();
-            con.setRequestMethod("GET");
-            con.setRequestProperty("Authorization", authorization);
-            con.setRequestProperty("Content-Type", "application/json");
-            int status =0;
+        public static String getReservedQtyFromOracle(String jobId, String itemCode) throws ClassNotFoundException {
+            String oracleQuantity = null;
+            Class.forName("oracle.jdbc.driver.OracleDriver");
+            Connection oracleCon = null;
             try{
-                status = con.getResponseCode();
-            }
-            catch(Exception ex){
-                LogUtil.error("",ex, ex.getMessage());
-            }
-
-            LogUtil.info("Status", ""+status);
-            BufferedReader in = null;
-            StringBuffer content = null;
-            try {
-                in = new BufferedReader(new InputStreamReader(con.getInputStream()));
-                String inputLine;
-                content = new StringBuffer();
-                while ((inputLine = in.readLine()) != null) {
-                    content.append(inputLine);
+                oracleCon = DriverManager.getConnection("jdbc:oracle:thin:#envVariable.jdbcurlIP#", "#envVariable.jdbcuserName#", "#envVariable.jdbcPassword#");
+                String query = "SELECT distinct SUM(QUANTITY),INVENTORY_ITEM_ID, SUB_INVENTORY,TRANSACTION_UOM," +
+                        "JOB_NO,ITEM_CODE FROM apps.XXOIC_ORAEBS_JOGET_MMT_V where 1=1 and JOB_NO = ? AND ITEM_CODE = ?" +
+                        " group by JOB_NO,ITEM_CODE,INVENTORY_ITEM_ID,SUB_INVENTORY,TRANSACTION_UOM";
+                PreparedStatement stmt = oracleCon.prepareStatement(query);
+                stmt.setString(1, jobId);
+                stmt.setString(2,itemCode);
+                ResultSet set = stmt.executeQuery();
+                if(set != null && !set.isClosed()) {
+                    set.next();
+                    LogUtil.info("isReservedStockAvailabe",set.getString(3));
+                    oracleQuantity = set.getString(1);
                 }
             }
             catch(Exception ex){
-                LogUtil.error("",ex,ex.getMessage());
+                LogUtil.error("isReservedStockAvailabe",ex,ex.getMessage());
             }
-            finally {
-                in.close();
-            }
-            con.disconnect();
-            LogUtil.info("Response status: " , Integer.toString(status));
-            return content.toString();
-        }
+            finally{
+                try {
+                    if (oracleCon != null && !oracleCon.isClosed()) {
+                        oracleCon.close();
+                    }
+                }
+                catch(SQLException ex){
 
-        public static String processJsonArray(JSONArray array, String inventoryItemId){
-            String quantity = null;
-            for(int i=0; i < array.length(); i++){
-                FormRow row = new FormRow();
-                JSONObject obj = array.getJSONObject(i);
-                String jsonInventoryId = obj.getString("inventory_item_id");
-                if(inventoryItemId.equals(jsonInventoryId)){
-                    quantity = obj.getString("quantity");
-                    break;
                 }
             }
-            return quantity;
+            return oracleQuantity;
         }
-        public static String processColumn(Object name) {
-            return (name == null ? "" : name.toString());
-        }
-        // This method should be replaced by new api method
-        // Copy from here
 
-        public static String qtyOnHandJsonCall(String itemInventoryId, String subInventory) throws IOException {
-            String urlString = "#envVariable.restAPIQOHNEWURL#".concat(itemInventoryId).concat("/").concat(subInventory);
-            URL url = new URL(urlString);
+        public static String jsonCallForStockInHand(String inventoryItemId, String subInventory) throws IOException{
+            URL url = new URL(qtyUrl);
             HttpURLConnection con = (HttpURLConnection) url.openConnection();
-            con.setRequestMethod("GET");
+            con.setRequestMethod("POST");
+            con.setRequestProperty("content-type", "application/json");
+            con.setRequestProperty("Authorization", authorization);
+            /* Payload support */
+            con.setDoOutput(true);
+            DataOutputStream out = new DataOutputStream(con.getOutputStream());
+            out.writeBytes("{\n");
+            out.writeBytes("    \"QUERY_QUANTITIES_Input\": {\n");
+            out.writeBytes("        \"@xmlns\": \"http://xmlns.oracle.com/apps/inv/rest/oicquantitycheck/query_quantities/\",\n");
+            out.writeBytes("        \"RESTHeader\": {\n");
+            out.writeBytes("            \"@xmlns\": \"http://xmlns.oracle.com/apps/fnd/rest/header\",\n");
+            out.writeBytes("            \"Responsibility\": \"OMM_INVENTORY_USER\",\n");
+            out.writeBytes("            \"RespApplication\": \"INV\",\n");
+            out.writeBytes("            \"SecurityGroup\": \"STANDARD\",\n");
+            out.writeBytes("            \"NLSLanguage\": \"AMERICAN\",\n");
+            out.writeBytes("            \"Org_Id\": \"115\"\n");
+            out.writeBytes("        },\n");
+            out.writeBytes("        \"InputParameters\": {\n");
+            out.writeBytes("            \"P_API_VERSION_NUMBER\": \"1.0\",\n");
+            out.writeBytes("            \"P_INIT_MSG_LIST\": \"T\",\n");
+            out.writeBytes("             \"P_ORGANIZATION_ID\":\"142\",\n");
+            out.writeBytes("             \"P_INVENTORY_ITEM_ID\":\""+inventoryItemId+"\",\n");
+            out.writeBytes("             \"P_ONHAND_SOURCE\": \"2\",\n");
+            out.writeBytes("             \"SUBINVENTORY_CODE\":\""+subInventory+"\"  \n");
+            out.writeBytes("        }\n");
+            out.writeBytes("    }\n");
+            out.writeBytes("}");
+            out.flush();
+            out.close();
 
             int status = con.getResponseCode();
             BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
             String inputLine;
             StringBuffer content = new StringBuffer();
-            while((inputLine = in.readLine()) != null) {
+            while ((inputLine = in.readLine()) != null) {
                 content.append(inputLine);
             }
             in.close();
             con.disconnect();
-            String jsonString = content.toString();
-            JSONObject jsonObject = new JSONObject(jsonString);
-            JSONArray jsonArray = jsonObject.getJSONArray("items");
-            String reservedStock = processJsonArrayOracleQty(jsonArray, itemInventoryId);
-            return reservedStock;
+            System.out.println("Response status: " + status);
+            return parseJsonObject(content.toString(),"X_QOH");
         }
-
-        public static String processJsonArrayOracleQty(JSONArray array, String inventoryItemId){
-            String quantity = "0.0";
-            try {
-                for (int i = 0; i < array.length(); i++) {
-                    JSONObject obj = array.getJSONObject(i);
-                    String jsonInventoryId = Integer.toString(obj.getInt("inventory_item_id"));
-                    if (inventoryItemId.equals(jsonInventoryId)) {
-                        quantity = Double.toString(obj.getDouble("avai_to_trnasact_qty"));
-                        break;
-                    }
-                }
-            }
-            catch(Exception ex){
-                //LogUtil.error(this.getClass().getName(), ex, ex.getMessage());
-            }
-            return quantity;
-        }
-        // copy till here
-
 
         // get cost from oracle
         public static String jsonCallForTransactionCost(String inventoryId) throws IOException {
@@ -540,7 +506,7 @@ public class GridValue
             DataOutputStream out = new DataOutputStream(con.getOutputStream());
             out.writeBytes("{\n");
             out.writeBytes("    \"GET_ITEM_COST_Input\": {\n");
-            out.writeBytes("        \"@xmlns\": \""+costUrl+"\",\n");
+            out.writeBytes("        \"@xmlns\": \"http://xmlns.oracle.com/apps/bom/rest/oicitemcost/get_item_cost/\",\n");
             out.writeBytes("        \"RESTHeader\": {\n");
             out.writeBytes("            \"@xmlns\": \"http://xmlns.oracle.com/apps/fnd/rest/header\",\n");
             out.writeBytes("            \"Responsibility\": \"COST_MANAGEMENT\",\n");
@@ -615,7 +581,7 @@ public class GridValue
             DataOutputStream out = new DataOutputStream(con.getOutputStream());
             out.writeBytes("{\n");
             out.writeBytes("    \"MTL_TRANSACTIONS_INTERFACE_Input\": {\n");
-            out.writeBytes("        \"@xmlns\": \""+transactionUrl+"\",\n");
+            out.writeBytes("        \"@xmlns\": \"http://xmlns.oracle.com/apps/inv/concurrentprogram/rest/oicmtlint/mtl_transactions_interface\",\n");
             out.writeBytes("        \"RESTHeader\": {\n");
             out.writeBytes("            \"@xmlns\": \"http://xmlns.oracle.com/apps/fnd/rest/header\",\n");
             out.writeBytes("            \"Responsibility\": \"OMM MISCELLANEOUS USER\",\n");

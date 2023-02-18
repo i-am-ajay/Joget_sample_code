@@ -14,6 +14,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Date;
 import java.util.Map;
 
 public class StoreBinderForUnreservedPRSoftAllocation {
@@ -45,6 +46,8 @@ public class StoreBinderForUnreservedPRSoftAllocation {
                     // add record to soft allocation row set
                     row.setProperty("job_number",jobNumber);
                     row.setProperty("id", UuidGenerator.getInstance().getUuid());
+                    row.setDateCreated(new Date());
+                    row.setDateModified(new Date());
                     softAllocationFormRowSet.add(row);
                 }
             }

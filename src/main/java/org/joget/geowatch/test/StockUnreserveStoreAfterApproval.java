@@ -8,6 +8,7 @@ import org.joget.apps.form.model.FormData;
 import org.joget.apps.form.model.FormRow;
 import org.joget.apps.form.model.FormRowSet;
 import org.joget.commons.util.LogUtil;
+import org.json.JSONArray;
 import org.json.JSONObject;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -20,19 +21,19 @@ import java.net.URL;
 import java.util.Map;
 
 
-public class StockUnreserveApprovalPostProcess {
-    static String transactionUrl = "http://omuatap.oasiserp.com:8048/webservices/rest/oicmtlint/mtl_transactions_interface/";
-    static String qtyUrl = "http://omuatap.oasiserp.com:8048/webservices/rest/oiconhand/query_quantities/";
-    static String costUrl = "http://omuatap.oasiserp.com:8048/webservices/rest/oicitemcost/get_item_cost/";
+public class StockUnreserveStoreAfterApproval {
+    static String authorization = "#envVariable.ommrestapiauthentication#";
+    static String transactionUrl = "#envVariable.restAPIMRIssueQanty#";
+    static String qtyUrl = "#envVariable.restAPIQOH#";
+    static String costUrl = "#envVariable.restAPIGetItemCost#";
 
     public static FormRowSet store(Element element, FormRowSet rows, FormData formData) throws IOException, ClassNotFoundException {
         rows.setMultiRow(true);
         String parentFormId = formData.getPrimaryKeyValue();
         String requestParam = formData.getRequestParameter("process_reject");
         if(requestParam != null && requestParam.equals("Reject")){
-            LogUtil.info("request param", formData.getRequestParameter("process_reject"));
             for(FormRow row : rows){
-                row.setProperty("status","rejected");
+                row.setProperty("item_status","Rejected");
                 row.setProperty("parentFieldId", parentFormId);
             }
         }
@@ -47,10 +48,12 @@ public class StockUnreserveApprovalPostProcess {
                 String transactionUom = row.getProperty("transaction_uom");
                 String permission = row.getProperty("unreserve_permission");
                 String jobOrder = row.getProperty("job_no");
+                String subInventory = row.getProperty("sub_inventory");
+                LogUtil.info("Sub invenotry details",subInventory);
                 String transactionId = row.getProperty("unique_transaction_id");
 
                 if (permission.equalsIgnoreCase("allowed") && !transactionQty.equalsIgnoreCase("0.0")) {
-                    String oracleQuantity = isReservedStockAvailabe(transactionId);
+                    String oracleQuantity = isReservedStockAvailabe(jobOrder, inventoryId);
 
                     if (oracleQuantity != null) {
                         Double approveQtyNumeric = 0.0;
@@ -58,32 +61,28 @@ public class StockUnreserveApprovalPostProcess {
                         if (transactionQty != null && !transactionQty.trim().matches("[a-zA-Z]*")) {
                             approveQtyNumeric = Double.parseDouble(transactionQty);
                         }
-                        if (oracleQuantity != null && !oracleQuantity.trim().matches("[a-zA-Z]*")) {
-                            LogUtil.info("Oracle Quantity String", oracleQuantity);
+                        if (!oracleQuantity.trim().matches("[a-zA-Z]*")) {
                             oracleQtyNumeric = Double.parseDouble(oracleQuantity);
                         }
                         double result = oracleQtyNumeric - approveQtyNumeric;
-                        LogUtil.info("Oracle Numeric", Double.toString(oracleQtyNumeric));
-                        LogUtil.info("Approved Numeric", Double.toString(approveQtyNumeric));
-                        LogUtil.info("Result", Double.toString(result));
+
 
                         if (result >= 0.0) {
 
                             String transactionCost = jsonCallForTransactionCost(inventoryId);
-                            LogUtil.info("", "transaction Cost");
                             int subInventorystatus = jsonCallToSubInventory(inventoryId, "-".concat(transactionQty), transactionCost, transactionUom, "J-RESERVED", dateStr, jobOrder, "2104");
                             if (subInventorystatus != 200) {
-                                row.setProperty("approved_qty", "Sub-Inventory not update. Item can't be un-reserved");
+                                row.setProperty("approved_qty", "Stock is not released from J-RESERVED. Item can't be un-reserved");
                                 row.setProperty("item_status", "Un-reserve Failed");
                             } else {
                                 LogUtil.info("Stock Deducted from j-reserved inventory", "stock deducted");
-                                int mainStoreStatus = jsonCallToMainStore(inventoryId, transactionQty, transactionCost, transactionUom, "MAIN STORE", dateStr, jobOrder, " 2124");
+                                int mainStoreStatus = jsonCallToMainStore(inventoryId, transactionQty, transactionCost, transactionUom, subInventory, dateStr, jobOrder, " 2124");
                                 if (mainStoreStatus != 200) {
-                                    row.setProperty("requiredToReserveQty", "Main Store Inventory Not Updated. Item Un-reserved from sub-inventory, contact Admin");
+                                    row.setProperty("requiredToReserveQty", subInventory+" Not Updated, but item is un-reserved from J-RESERVED, contact Admin");
                                     row.setProperty("item_status", "Un-reserve Failed");
                                 } else {
-                                    LogUtil.info("Stock Deducted from main inventory", "stock deducted");
-                                    row.setProperty("item_status", "Un-reserved");
+                                    LogUtil.info("Stock Deducted from"+subInventory, transactionQty+" qty deducted");
+                                    row.setProperty("item_status", "Un-reserved SuccessFully");
                                 }
                             }
                         } else {
@@ -92,7 +91,7 @@ public class StockUnreserveApprovalPostProcess {
                         }
                     }
                 } else {
-                    row.setProperty("item_status", "Rejected");
+                    row.setProperty("item_status", "Un-reserve Rejected");
                 }
                 row.setProperty("parentFieldId", parentFormId);
             }
@@ -103,35 +102,19 @@ public class StockUnreserveApprovalPostProcess {
         return rows;
     }
 
-    public static String isReservedStockAvailabe(String transactionId) throws ClassNotFoundException {
+    public static String isReservedStockAvailabe(String jobNo, String inventoryItemid) throws ClassNotFoundException {
         String oracleQuantity = null;
-        Class.forName("oracle.jdbc.driver.OracleDriver");
-        Connection oracleCon = null;
         try{
-            oracleCon = DriverManager.getConnection("jdbc:oracle:thin:#envVariable.jdbcurlIP#", "#envVariable.jdbcuserName#", "#envVariable.jdbcPassword#");
-            String query = "SELECT distinct JOB_NO,ITEM_CODE,QUANTITY FROM apps.XXOIC_ORAEBS_JOGET_MMT_V where 1=1 and UNIQUE_TRANSCATION_ID = ?";
-            PreparedStatement stmt = oracleCon.prepareStatement(query);
-            stmt.setString(1, transactionId);
-            ResultSet set = stmt.executeQuery();
-            if(set != null && !set.isClosed()) {
-                set.next();
-                LogUtil.info("isReservedStockAvailabe",set.getString(3));
-                oracleQuantity = set.getString(3);
-            }
+            String jsonString = getReserveStock(jobNo, inventoryItemid);
+            JSONObject jsonObject = new JSONObject(jsonString);
+            JSONArray jsonArray = jsonObject.getJSONArray("items");
+            oracleQuantity = processJsonArray(jsonArray, inventoryItemid);
             return oracleQuantity;
         }
         catch(Exception ex){
             LogUtil.error("isReservedStockAvailabe",ex,ex.getMessage());
         }
         finally{
-            try {
-                if (oracleCon != null && !oracleCon.isClosed()) {
-                    oracleCon.close();
-                }
-            }
-            catch(SQLException ex){
-
-            }
         }
         return oracleQuantity;
     }
@@ -142,16 +125,16 @@ public class StockUnreserveApprovalPostProcess {
         HttpURLConnection con = (HttpURLConnection) url.openConnection();
         con.setRequestMethod("POST");
         con.setRequestProperty("content-type", "application/json");
-        con.setRequestProperty("Authorization", "Basic aXQudmlrYXNyYWk6b3JhY2xlMzIx");
+        con.setRequestProperty("Authorization", authorization);
 
         /* Payload support */
         con.setDoOutput(true);
         DataOutputStream out = new DataOutputStream(con.getOutputStream());
         out.writeBytes("{\n");
         out.writeBytes("    \"GET_ITEM_COST_Input\": {\n");
-        out.writeBytes("        \"@xmlns\": \"http://xmlns.oracle.com/apps/bom/rest/oicitemcost/get_item_cost/\",\n");
+        out.writeBytes("        \"@xmlns\": \""+costUrl+"\",\n");
         out.writeBytes("        \"RESTHeader\": {\n");
-        out.writeBytes("            \"@xmlns\": \"http://xmlns.oracle.com/apps/fnd/rest/header\",\n");
+        out.writeBytes("            \"@xmlns\": \"ader\",\n");
         out.writeBytes("            \"Responsibility\": \"COST_MANAGEMENT\",\n");
         out.writeBytes("            \"RespApplication\": \"BOM\",\n");
         out.writeBytes("            \"SecurityGroup\": \"STANDARD\",\n");
@@ -216,7 +199,7 @@ public class StockUnreserveApprovalPostProcess {
         URL url = new URL(transactionUrl);
         HttpURLConnection con = (HttpURLConnection) url.openConnection();
         con.setRequestMethod("POST");
-        con.setRequestProperty("Authorization", "Basic aXQuYW1pdG06b3JhY2xlMTIzNA==");
+        con.setRequestProperty("Authorization", authorization);
         con.setRequestProperty("Content-Type", "application/json");
 
         /* Payload support */
@@ -224,7 +207,7 @@ public class StockUnreserveApprovalPostProcess {
         DataOutputStream out = new DataOutputStream(con.getOutputStream());
         out.writeBytes("{\n");
         out.writeBytes("    \"MTL_TRANSACTIONS_INTERFACE_Input\": {\n");
-        out.writeBytes("        \"@xmlns\": \"http://xmlns.oracle.com/apps/inv/concurrentprogram/rest/oicmtlint/mtl_transactions_interface\",\n");
+        out.writeBytes("        \"@xmlns\": \""+transactionUrl+""+transactionUrl+"\",\n");
         out.writeBytes("        \"RESTHeader\": {\n");
         out.writeBytes("            \"@xmlns\": \"http://xmlns.oracle.com/apps/fnd/rest/header\",\n");
         out.writeBytes("            \"Responsibility\": \"OMM MISCELLANEOUS USER\",\n");
@@ -273,5 +256,68 @@ public class StockUnreserveApprovalPostProcess {
         con.disconnect();
         return status;
     }
+
+    public static String getReserveStock(String jobNo, String inventoryItemId) throws IOException {
+        String jobUrl = "#envVariable.restReservedStockJobWise#";
+        String itemUrl = "#envVariable.restReservedStockItemWise#";
+
+        URL url = null;
+        if(jobNo != null && !jobNo.equals("")) {
+            url = new URL(jobUrl.concat(jobNo));
+        }
+        else{
+            url = new URL(itemUrl.concat(inventoryItemId));
+        }
+
+        HttpURLConnection con = (HttpURLConnection) url.openConnection();
+        con.setRequestMethod("GET");
+        con.setRequestProperty("Authorization", authorization);
+        con.setRequestProperty("Content-Type", "application/json");
+        int status =0;
+        try{
+            status = con.getResponseCode();
+        }
+        catch(Exception ex){
+            LogUtil.error("",ex, ex.getMessage());
+        }
+
+        LogUtil.info("Status", ""+status);
+        BufferedReader in = null;
+        StringBuffer content = null;
+        try {
+            in = new BufferedReader(new InputStreamReader(con.getInputStream()));
+            String inputLine;
+            content = new StringBuffer();
+            while ((inputLine = in.readLine()) != null) {
+                content.append(inputLine);
+            }
+        }
+        catch(Exception ex){
+            LogUtil.error("",ex,ex.getMessage());
+        }
+        finally {
+            in.close();
+        }
+        con.disconnect();
+        LogUtil.info("Response status: " , Integer.toString(status));
+        return content.toString();
+    }
+
+    public static String processJsonArray(JSONArray array, String inventoryItemId){
+        String quantity = null;
+        for(int i=0; i < array.length(); i++){
+            FormRow row = new FormRow();
+            JSONObject obj = array.getJSONObject(i);
+            String jsonInventoryId = obj.getString("inventory_item_id");
+            if(inventoryItemId.equals(jsonInventoryId)){
+                quantity = obj.getString("quantity");
+                break;
+            }
+        }
+        return quantity;
+    }
+    public static String processColumn(Object name) {
+        return (name == null ? "" : name.toString());
+    }
 }
-StockUnreserveApprovalPostProcess.store(element, rows, formData);
+StockUnreserveStoreAfterApproval.store(element, rows, formData);

@@ -31,7 +31,7 @@ public class Test {
                 DataSource ds = (DataSource)AppUtil.getApplicationContext().getBean("setupDataSource");
                 con = ds.getConnection();
 
-                // execute SQL query
+                // execut  e SQL query
                 if(!con.isClosed()) {
                     PreparedStatement stmt = con.prepareStatement("SELECT id," +
                             "c_parentFieldId,c_item,c_itemDescription,c_primaryUOM,c_availableQty,c_requiredToReserveQty," +
@@ -39,6 +39,7 @@ public class Test {
                             "FROM app_fd_ods_allocate_mat where c_parentFieldId = ?");
                     stmt.setObject(1, "#requestParam.id#");
                     System.out.println("#requestParam.id#");
+
                     ResultSet rs = stmt.executeQuery();
                     while (rs.next()) {
                         FormRow row = new FormRow();

@@ -10,7 +10,7 @@
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
-      <module name="geowatch_plugin" target="1.8" />
+      <module name="geowatch_plugin" target="9" />
     </bytecodeTargetLevel>
   </component>
 </project>

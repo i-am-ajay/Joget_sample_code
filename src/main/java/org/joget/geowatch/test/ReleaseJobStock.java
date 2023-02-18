@@ -5,6 +5,7 @@ import org.joget.apps.form.dao.FormDataDao;
 import org.joget.apps.form.model.FormRow;
 import org.joget.apps.form.model.FormRowSet;
 import org.joget.commons.util.LogUtil;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import javax.sql.DataSource;
@@ -18,23 +19,32 @@ import java.sql.*;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 public class ReleaseJobStock {
-    static String transactionUrl = "http://omuatap.oasiserp.com:8048/webservices/rest/oicmtlint/mtl_transactions_interface/";
-    static String costUrl = "http://omuatap.oasiserp.com:8048/webservices/rest/oicitemcost/get_item_cost/";
+    static String authorization = "#envVariable.ommrestapiauthentication#";
+    static String transactionUrl = "#envVariable.restAPIMRIssueQanty#";
+    static String qtyUrl = "#envVariable.restAPIQOH#";
+    static String costUrl = "#envVariable.restAPIGetItemCost#";
+    static String jobUrl = "#envVariable.restReservedStockJobWise#";
 
     public static void runProcess() {
         try {
+            LogUtil.info(ReleaseJobStock.class.getName(),"Running Process Of stock return");
             List jobList = getJobs();
+            LogUtil.info("Size",""+jobList.size());
             for(Object job : jobList){
                 getJobItems(job.toString());
             }
         }
         catch(SQLException ex) {
+            LogUtil.error("",ex,ex.getMessage());
         }
         catch(ClassNotFoundException ex) {
-
+            LogUtil.error("",ex,ex.getMessage());
+        } catch (IOException e) {
+            LogUtil.error("",e,e.getMessage());
         }
     }
     public static List getJobs() throws SQLException{
@@ -46,7 +56,7 @@ public class ReleaseJobStock {
             PreparedStatement stmtJob = con.prepareStatement(sqlJobId);
             ResultSet rsJob = stmtJob.executeQuery();
             while(rsJob.next()){
-               jobList.add(rsJob.getString(1));
+                jobList.add(rsJob.getString(1));
             }
         }
         if(con!=null){
@@ -61,85 +71,87 @@ public class ReleaseJobStock {
         try {
             String cost = jsonCallForTransactionCost(inventoryId);
             int status = jsonCallToSubInventory(inventoryId,("-").concat(quantity),cost,transactionUom,
-            "J-RESERVED",dateStr,jobNo,"2104");
+                    "J-RESERVED",dateStr,jobNo,"2104");
             if(status == 200) {
-               int mainStoreStatus = jsonCallToMainStore(inventoryId, quantity, cost, transactionUom,
-                       "Main Store",dateStr,jobNo,"2124");
-               if(mainStoreStatus == 200) {
-                transactionStatus = "Success";
-               }
-               else {
-                transactionStatus = "Stock deducted from sub-inventory, but failed to reserved in main inventory. Contact Admin.";
-               }
+                int mainStoreStatus = jsonCallToMainStore(inventoryId, quantity, cost, transactionUom,
+                        subInventory,dateStr,jobNo,"2124");
+                if(mainStoreStatus == 200) {
+                    transactionStatus = "Success";
+                }
+                else {
+                    transactionStatus = "Stock deducted from sub-inventory, but failed to reserved in main inventory. Contact Admin.";
+                }
             }
             else {
                 transactionStatus = "Failed to move out stock from sub-inventory. No Stock is deducted.";
             }
         }
         catch(IOException ex) {
-
+            LogUtil.error(ReleaseJobStock.class.getName(),ex,ex.getMessage());
         }
         return transactionStatus;
-
     }
-    public static void getJobItems(String jobId) throws ClassNotFoundException{
-        Class.forName("oracle.jdbc.driver.OracleDriver");
-        Connection oracleCon = null;
-        FormRowSet rowSet = new FormRowSet();
-        rowSet.setMultiRow(true);
-        try{
-            oracleCon = DriverManager.getConnection("jdbc:oracle:thin:#envVariable.jdbcurlIP#", "#envVariable.jdbcuserName#", "#envVariable.jdbcPassword#");
-            String query = "SELECT distinct QUANTITY,INVENTORY_ITEM_ID, SUB_INVENTORY,transaction_uom," +
-                    "INVENTORY_ORG,JOB_NO,ITEM_CODE,TRANSACTION_TYPE,TRANSACTION_TYPE_ID FROM apps.XXOIC_ORAEBS_JOGET_MMT_V where 1=1 and JOB_NO = ?" +
-                    "group by job_no,item_code";
-            PreparedStatement stmt = oracleCon.prepareStatement(query);
-            stmt.setString(1, jobId);
-            ResultSet set = stmt.executeQuery();
-            while(set.next()){
-                String quantity = set.getString(1);
-                String inventoryId = set.getString(2);
-                String subInventoryId = set.getString(3);
-                String transactionUom = set.getString(4);
-                String transactionStatus = releaseStock(inventoryId,subInventoryId,quantity,transactionUom,jobId);
-                String inventoryOrg = set.getString(5);
-                String jobNo = set.getString(6);
-                String itemCode = set.getString(7);
-                String transactionType = set.getString(8);
-                String transactionTypeId = set.getString(9);
+    public static void getJobItems(String jobId) throws ClassNotFoundException, IOException {
+        String jobNo = jobId;
 
-                FormRow row = new FormRow();
-                row.setProperty("transaction_uom",processColumn(transactionUom));
-                row.setProperty("INVENTORY_ORG",processColumn(inventoryOrg));
-                row.setProperty("INVENTORY_ITEM_ID",processColumn(inventoryId));
-                row.setProperty("SUB_INVENTORY",processColumn(subInventoryId));
-                row.setProperty("status",processColumn(transactionStatus));
-                row.setProperty("QUANTITY",processColumn(quantity));
-                row.setProperty("ITEM_CODE",processColumn(itemCode));
-                row.setProperty("TRANSACTION_TYPE",processColumn(transactionType));
-                row.setProperty("TRANSACTION_TYPE_ID",processColumn(transactionTypeId));
-                row.setProperty("JOB_NO",processColumn(jobNo));
-                rowSet.add(row);
-            }
-        }
-        catch(Exception ex){
-            LogUtil.error("isReservedStockAvailabe",ex,ex.getMessage());
-        }
-        finally{
-            try {
-                if (oracleCon != null && !oracleCon.isClosed()) {
-                    oracleCon.close();
-                }
-            }
-            catch(SQLException ex){
-
-            }
-        }
+        String jsonData = getReserveStock(jobNo);
+        JSONObject jsonObject = new JSONObject(jsonData);
+        JSONArray jsonArray = jsonObject.getJSONArray("items");
+        FormRowSet set = processJsonArray(jsonArray);
+        set.setMultiRow(true);
         FormDataDao formDataDao = (FormDataDao) AppUtil.getApplicationContext().getBean("formDataDao");
-        formDataDao.saveOrUpdate("unreserveStockProcessAudit", "ods_unresv_pro_audit", rowSet);
+        formDataDao.saveOrUpdate("unreserveStockProcessAudit", "ods_unresv_pro_audit", set);
+        LogUtil.info("","Stock Released");
     }
 
-    public static String processColumn(String val) throws SQLException {
-        return (val == null ? "" : val);
+    public static String getReserveStock(String jobNo) throws IOException {
+        URL url = new URL(jobUrl+jobNo);
+        HttpURLConnection con = (HttpURLConnection) url.openConnection();
+        con.setRequestMethod("GET");
+        con.setRequestProperty("Authorization", authorization);
+        con.setRequestProperty("Content-Type", "application/json");
+
+        int status = con.getResponseCode();
+        BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
+        String inputLine;
+        StringBuffer content = new StringBuffer();
+        while ((inputLine = in.readLine()) != null) {
+            content.append(inputLine);
+        }
+        in.close();
+        con.disconnect();
+        return content.toString();
+    }
+
+    public static FormRowSet processJsonArray(JSONArray array){
+        FormRowSet rowSet = new FormRowSet();
+        for(int i=0; i < array.length(); i++){
+            FormRow row = new FormRow();
+            ;
+            JSONObject obj = array.getJSONObject(i);
+            String inventoryId = processColumn(obj.getString("inventory_item_id"));
+            String subInventoryId = processColumn(obj.getString("sub_inventory"));
+            String quantity = processColumn(obj.getString("quantity"));
+            String transactionUom = processColumn(obj.getString("transaction_uom"));
+            String jobId = processColumn(obj.getString("job_no"));
+            String transactionStatus = releaseStock(inventoryId,subInventoryId,quantity,transactionUom,jobId);
+            row.setProperty("item",processColumn(obj.getString("item")));
+            row.setProperty("description",processColumn(obj.getString("description")));
+            row.setProperty("inventory_item_id",inventoryId);
+            row.setProperty("job_no", jobId);
+            row.setProperty("sub_inventory",subInventoryId);
+            row.setProperty("transaction_uom",transactionUom);
+            row.setProperty("quantity",quantity);
+            row.setProperty("status",processColumn(transactionStatus));
+            row.setDateCreated(new Date());
+            row.setDateModified(new Date());
+            rowSet.add(row);
+        }
+        return rowSet;
+    }
+
+    public static String processColumn(Object name) {
+        return (name == null ? "" : name.toString());
     }
 
     public static Connection getJogetConnection(){
@@ -159,14 +171,14 @@ public class ReleaseJobStock {
         HttpURLConnection con = (HttpURLConnection) url.openConnection();
         con.setRequestMethod("POST");
         con.setRequestProperty("content-type", "application/json");
-        con.setRequestProperty("Authorization", "Basic aXQudmlrYXNyYWk6b3JhY2xlMzIx");
+        con.setRequestProperty("Authorization", authorization);
 
         /* Payload support */
         con.setDoOutput(true);
         DataOutputStream out = new DataOutputStream(con.getOutputStream());
         out.writeBytes("{\n");
         out.writeBytes("    \"GET_ITEM_COST_Input\": {\n");
-        out.writeBytes("        \"@xmlns\": \"http://xmlns.oracle.com/apps/bom/rest/oicitemcost/get_item_cost/\",\n");
+        out.writeBytes("        \"@xmlns\": \""+costUrl+"\",\n");
         out.writeBytes("        \"RESTHeader\": {\n");
         out.writeBytes("            \"@xmlns\": \"http://xmlns.oracle.com/apps/fnd/rest/header\",\n");
         out.writeBytes("            \"Responsibility\": \"COST_MANAGEMENT\",\n");
@@ -233,7 +245,7 @@ public class ReleaseJobStock {
         URL url = new URL(transactionUrl);
         HttpURLConnection con = (HttpURLConnection) url.openConnection();
         con.setRequestMethod("POST");
-        con.setRequestProperty("Authorization", "Basic aXQuYW1pdG06b3JhY2xlMTIzNA==");
+        con.setRequestProperty("Authorization", authorization);
         con.setRequestProperty("Content-Type", "application/json");
 
         /* Payload support */
@@ -241,7 +253,7 @@ public class ReleaseJobStock {
         DataOutputStream out = new DataOutputStream(con.getOutputStream());
         out.writeBytes("{\n");
         out.writeBytes("    \"MTL_TRANSACTIONS_INTERFACE_Input\": {\n");
-        out.writeBytes("        \"@xmlns\": \"http://xmlns.oracle.com/apps/inv/concurrentprogram/rest/oicmtlint/mtl_transactions_interface\",\n");
+        out.writeBytes("        \"@xmlns\": \""+transactionUrl+"\",\n");
         out.writeBytes("        \"RESTHeader\": {\n");
         out.writeBytes("            \"@xmlns\": \"http://xmlns.oracle.com/apps/fnd/rest/header\",\n");
         out.writeBytes("            \"Responsibility\": \"OMM MISCELLANEOUS USER\",\n");
@@ -291,4 +303,4 @@ public class ReleaseJobStock {
         return status;
     }
 }
-//ReleaseJobStock.runProcess();
+ReleaseJobStock.runProcess();
