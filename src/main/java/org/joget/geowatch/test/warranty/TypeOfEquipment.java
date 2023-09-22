@@ -18,6 +18,7 @@ public class TypeOfEquipment {
     public static void getInvoiceDate(){
         String orderType = "#variable.ordertype#";
         String equipmentType = "";
+        String brand = "";
         FormDataDao dao = (FormDataDao) AppUtil.getApplicationContext().getBean("formDataDao");
         String id = "#variable.rId#";
         FormRow warrantyRow = dao.load("warranty_review_form","review_form",id);
@@ -34,7 +35,7 @@ public class TypeOfEquipment {
                     String item = "'"+(String)row.get("item_code")+"',";
                     items+=item;
                 }
-                LogUtil.info("DO Items",items);
+
             }
         }
         if(items != null && items.length() > 0 && !items.isEmpty()) {
@@ -43,17 +44,26 @@ public class TypeOfEquipment {
         try{
             DataSource ds = (DataSource)AppUtil.getApplicationContext().getBean("setupDataSource");
             connection = ds.getConnection();
-            PreparedStatement statementSo = connection.prepareStatement("SELECT c_segment_3 FROM app_fd_items_master where c_item_code IN ("+items+")");
+            PreparedStatement statementSo = connection.prepareStatement("SELECT c_segment_3, c_segment_2 FROM app_fd_items_master where c_item_code IN ("+items+")" +
+                    " AND c_segment_2 <> 'NEW'");
             ResultSet set = statementSo.executeQuery();
             Set equipSet = new HashSet();
+            Set brandSet = new HashSet();
             while(set.next()){
                 equipSet.add(set.getString(1));
+                brandSet.add(set.getString(2));
             }
             for(Object equipObj : equipSet){
                 equipmentType += equipObj +", ";
             }
-            if(equipmentType.length() > 2){
+            for(Object brandObj : brandSet){
+                brand += brandObj+", ";
+            }
+            if(equipmentType.length() >= 2){
                 equipmentType = equipmentType.substring(0,equipmentType.length() - 2);
+            }
+            if(brand.length() >= 2){
+                brand = brand.substring(0, brand.length() - 2);
             }
         }
         catch(SQLException ex){
@@ -71,6 +81,7 @@ public class TypeOfEquipment {
         }
         FormRowSet warrantySet = new FormRowSet();
         warrantyRow.setProperty("type_equipment",equipmentType);
+        warrantyRow.setProperty("brand",brand);
         warrantySet.add(warrantyRow);
         dao.saveOrUpdate("warranty_review_form", "review_form", warrantySet);
     }

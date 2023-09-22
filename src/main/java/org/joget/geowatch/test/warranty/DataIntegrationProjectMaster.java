@@ -3,6 +3,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Connection;
 import java.sql.SQLException;
+
+import org.joget.apps.app.service.AppService;
 import org.joget.apps.app.service.AppUtil;
 import java.sql.DriverManager;
 import java.time.LocalDate;
@@ -11,13 +13,18 @@ import org.joget.apps.form.dao.FormDataDao;
 import org.joget.apps.form.model.FormRow;
 import org.joget.apps.form.model.*;
 import org.joget.commons.util.LogUtil;
+import org.joget.workflow.model.WorkflowAssignment;
+import org.joget.workflow.model.service.WorkflowManager;
 
 
 public class DataIntegrationProjectMaster {
-    public static void dataIntegrationProjects() {
+    public static void dataIntegrationProjects(WorkflowAssignment assignment) {
         LogUtil.info("Project Master integration starts","");
-        LocalDate today = LocalDate.now();
-        LocalDate previousDay = today.minusDays(1);
+        //LocalDate today = LocalDate.now();
+        //LocalDate previousDay = today.minusDays(1);
+
+        LocalDate today = LocalDate.of(2023,4,30);
+        LocalDate previousDay = LocalDate.of(2023,4,1);
         Connection con = null;
         try {
             //Build Url for connecting to Oracle DB
@@ -33,24 +40,31 @@ public class DataIntegrationProjectMaster {
             // execute SQL query
             if (!con.isClosed()) {
                 //Populate Project Master Form
-                //String ProjectMasterQuery = "select * from apps.XXOIC_JOGETIN_SO_DETAILS_V where SO_NUMBER IN ('SO-113510','SO-113511','SO-109457')";
+                //String ProjectMasterQuery = "select * from apps.XXOIC_JOGETIN_SO_DETAILS_V where SO_NUMBER IN ('SO-135773')";
                 String ProjectMasterQuery = "select * from apps.XXOIC_JOGETIN_SO_DETAILS_V where LAST_UPDATE_DATE >= to_date(?, 'YYYY-MM-DD') " +
                         "AND LAST_UPDATE_DATE < to_date(?,'YYYY-MM-DD')";
                 PreparedStatement projectstmt = con.prepareStatement(ProjectMasterQuery);
                 projectstmt.setString(1,previousDay.toString());
                 projectstmt.setString(2,today.toString());
                 ResultSet projectrs = projectstmt.executeQuery();
-
+                int count = 0;
+                int batchNo = 0;
+                String formIdProject = "projectMaster";
+                String tableNameProject = "project_master";
+                String fieldIDProject = "SO_Number";
+                FormRowSet rowsProjectMasterData = new FormRowSet();
+                FormDataDao formDataDao = (FormDataDao) AppUtil.getApplicationContext().getBean("formDataDao");
                 while (projectrs.next()) {
-                    FormRowSet rowsProjectMasterData = new FormRowSet();
+
                     FormRow row = new FormRow();
-                    FormDataDao formDataDao = (FormDataDao) AppUtil.getApplicationContext().getBean("formDataDao");
+
                     //Set values
                     //Set Id using Primary Keys
                     String strSoHeader = (projectrs.getString("SO_HEADER_ID") != null) ? projectrs.getString("SO_HEADER_ID").toString() : "";
                     String strSoLine = (projectrs.getString("SO_LINE_ID") != null) ? projectrs.getString("SO_LINE_ID").toString() : "";
                     String prjMasterId = strSoHeader + "_" + strSoLine;
                     row.setProperty("id", prjMasterId);
+
                     //(projectrs.getString("ORDERED_ITEM")!= null)?projectrs.getString("ORDERED_ITEM").toString():"");
 
                     String strPrjSONumber = (projectrs.getString("SO_NUMBER") != null) ? projectrs.getString("SO_NUMBER").toString() : "";
@@ -64,6 +78,7 @@ public class DataIntegrationProjectMaster {
 
                     String strCustName = (projectrs.getString("CUSTOMER_NAME") != null) ? projectrs.getString("CUSTOMER_NAME").toString() : "";
                     row.setProperty("customer_name", strCustName);
+
 
                     String strSalesRepName = (projectrs.getString("SALESREP_NAME") != null) ? projectrs.getString("SALESREP_NAME").toString() : "";
                     row.setProperty("salesRep_name", strSalesRepName);
@@ -110,18 +125,31 @@ public class DataIntegrationProjectMaster {
                     row.setProperty("so_line_id", strSoLine);
 
 
-                    String formIdProject = "projectMaster";
-                    String tableNameProject = "project_master";
-                    String fieldIDProject = "SO_Number";
+
 
                     //Populate the form
                     rowsProjectMasterData.add(row);
-                    formDataDao.saveOrUpdate(formIdProject, tableNameProject, rowsProjectMasterData);
+                    if(count == 100){
+                        batchNo++;
+                        count = 0;
+                        formDataDao.saveOrUpdate(formIdProject, tableNameProject, rowsProjectMasterData);
+                        rowsProjectMasterData.clear();
+                        LogUtil.info("Batch No.",batchNo+"");
+                    }
+                    count++;
+
                 }
+                formDataDao.saveOrUpdate(formIdProject, tableNameProject, rowsProjectMasterData);
+                AppService appService = (AppService) AppUtil.getApplicationContext().getBean("appService");
+                WorkflowManager wm = (WorkflowManager) AppUtil.getApplicationContext().getBean("workflowManager");
+                wm.activityVariable(assignment.getActivityId(),"run_status", "Success");
             }
         }
         catch (Exception e) {
             LogUtil.error("Exception: ",e, e.getMessage());
+            AppService appService = (AppService) AppUtil.getApplicationContext().getBean("appService");
+            WorkflowManager wm = (WorkflowManager) AppUtil.getApplicationContext().getBean("workflowManager");
+            wm.activityVariable(assignment.getActivityId(),"run_status", "Error Thrown");
         }
         finally {
             try {
@@ -132,7 +160,7 @@ public class DataIntegrationProjectMaster {
             catch (SQLException e) {
             }
         }
-        LogUtil.info("End Integration","");
+        LogUtil.info("Project Integration","Ends");
     }
 }
-DataIntegrationProjectMaster.dataIntegrationProjects();
+DataIntegrationProjectMaster.dataIntegrationProjects(workflowAssignment);

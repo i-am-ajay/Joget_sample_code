@@ -2,9 +2,9 @@ package org.joget.geowatch.test.warranty;
 import java.text.*;
 import java.util.*;
 import java.lang.*;
-
 import java.util.Formatter;
 import org.apache.commons.lang.StringUtils;
+import org.joget.apps.app.service.AppService;
 import org.joget.apps.form.model.*;
 import org.joget.apps.form.service.*;
 import org.joget.apps.form.dao.FormDataDao;
@@ -15,7 +15,6 @@ import java.sql.Statement;
 import java.sql.PreparedStatement;
 import java.sql.Connection;
 import javax.sql.DataSource;
-import java.sql.Connection;
 import java.sql.DriverManager;
 import java.util.Properties;
 import java.util.ArrayList;
@@ -23,6 +22,8 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+
+import org.joget.commons.util.DynamicDataSource;
 import org.joget.commons.util.UuidGenerator;
 import org.joget.apps.app.dao.EnvironmentVariableDao;
 import org.joget.apps.app.model.AppDefinition;
@@ -33,6 +34,8 @@ import org.joget.apps.form.model.FormData;
 import org.joget.apps.form.model.FormRow;
 import org.joget.apps.form.model.FormRowSet;
 import org.joget.apps.form.model.FormStoreBinder;
+import org.joget.directory.model.User;
+import org.joget.directory.model.service.DirectoryManager;
 import org.joget.plugin.base.PluginManager;
 import org.joget.workflow.model.service.WorkflowManager;
 import org.json.JSONArray;
@@ -64,6 +67,7 @@ public class LoadWarrantyNew {
         String emirates = "";
         String landmark = "";
         String strbrand = "Rheem";
+        String sendMailToCreator = "N";
         Map salesorders = new HashMap();
         Map doNumbers = new HashMap();
         Map invoices = new HashMap();
@@ -77,21 +81,20 @@ public class LoadWarrantyNew {
         Boolean bChangeFlag = false;
         String strOrgWarStatus = "";
         String strOrgRevStatus = "";
-        LogUtil.info("$$$$$$------$$$$$",orderType);
-
+        // set value of send mail variable
+        PluginManager pluginManager = (PluginManager) AppUtil.getApplicationContext().getBean("pluginManager");
+        WorkflowManager wm = (WorkflowManager) pluginManager.getBean("workflowManager");
+        wm.activityVariable(assignment.getActivityId(),"send_mail_to_creator", sendMailToCreator);
+        // code section to generate warranty for a project
         if(orderType.equals("Project")){
-            LogUtil.info("--- RecordId", " ------- \n"+id);
             String sprojectNumber = "#variable.projectnumber#";
             String sprojectEndDate = "#variable.projectenddate#";
-            LogUtil.info("--- ProjectNumber", " ------- \n"+sprojectNumber);
-            LogUtil.info("--- ProjectEnd Date", " ------- \n"+sprojectEndDate);
             String sPrjQuery = "select * from app_fd_projects where c_projectNumber in ('"+sprojectNumber+"')";
 
             String sSOQuery = "select p.c_projectNumber, s.c_SO_Number, d.c_do_Number, d.c_invoiceNumber,p.c_warranty_start_date from app_fd_projects p join app_fd_so_number s on p.id = s.c_projectNum join app_fd_do_master d on s.c_SO_Number = d.c_so_number where p.c_projectNumber in ('"+sprojectNumber+"')";
-            LogUtil.info("--- Query for sales orders", " ------- \n"+sSOQuery);
             Connection connection = null;
             Statement statement = null;
-            LogUtil.info("--- Outside try block", " ------- \n");
+
             try {
                 DataSource ds = (DataSource)AppUtil.getApplicationContext().getBean("setupDataSource");
                 connection = ds.getConnection();
@@ -101,8 +104,7 @@ public class LoadWarrantyNew {
                 if(!connection.isClosed()) {
                     statementSo = connection.createStatement();
                     ResultSet rsSO = statementSo.executeQuery(sSOQuery);
-                    LogUtil.info("--- Query Executed", " ------- \n");
-                    LogUtil.info("--- Outside resultset of sales orders", " ------- \n"+rsSO.toString());
+
                     while (rsSO.next()) {
                         //LogUtil.info("--- Inside resultset of sales orders", " ------- \n"+rsSO.toString());
                         String projNumber = rsSO.getString("c_projectNumber");
@@ -162,8 +164,6 @@ public class LoadWarrantyNew {
                     }
 
 
-
-                    LogUtil.info("--- Before Executing Query", " ------- \n");
                     statement = connection.createStatement();
                     ResultSet warrantyrs = statement.executeQuery(sPrjQuery);
                     while (warrantyrs.next()) {
@@ -174,14 +174,14 @@ public class LoadWarrantyNew {
                         FormRow newRow = new FormRow();
                         FormRowSet rowsWarrantyReviewData = formDataDao.find("warranty_review_form", "review_form", "where c_pno =? and c_rev_status=?", new Object[] {key,"Active"}, null, null, null, null);
                         rowsWarrantyReviewData.setMultiRow(true);
-                        LogUtil.info("--- Before If Else Loop", " ------- \n" + rowsWarrantyReviewData);
+
                         //there is a warranty record for the project number retrieve it and display
                         //if there are more than one warranty record, get the latest revision
                         if(rowsWarrantyReviewData != null && !rowsWarrantyReviewData.isEmpty()){
-                            LogUtil.info("--- If loop ", " ------- \n"+ id);
+
                             for(FormRow	row:rowsWarrantyReviewData)
                             {
-                                LogUtil.info("Inside For Loop","");
+
                                 newRow.putAll(row);
                                 //Capture Other fields and increment the revision if there is a change in if there is a change in
                                 //invoice section, DO section, SO sections, quantity change, Item change or warranty dates
@@ -196,14 +196,15 @@ public class LoadWarrantyNew {
                                 String strSalesorders = strbSalesorders.toString();
                                 strSalesorders = strSalesorders.substring(0, strSalesorders.length()-2);
                                 String strOriginalSOs = (row.get("sales_orders")!= null)?row.get("sales_orders").toString():"";
-                                //LogUtil.info("--- Old Sales Orders ", " ------- \n"+ strOriginalSOs);
-                                //LogUtil.info("--- New Sales Orders ", " ------- \n"+ strSalesorders);
+
                                 if(!strSalesorders.equals(strOriginalSOs)){
+                                    LogUtil.info("SO Match","Flag set to true");
                                     bChangeFlag = true;
                                     newRow.put("sales_orders", strSalesorders);
                                     universalSoNum = strSalesorders;
                                 }
                                 else {
+
                                     row.put("sales_orders", strOriginalSOs);
                                     universalSoNum = strOriginalSOs;
                                 }
@@ -219,13 +220,14 @@ public class LoadWarrantyNew {
                                 String strDeliveryorders = strbDeliveryorders.toString();
                                 strDeliveryorders = strDeliveryorders.substring(0, strDeliveryorders.length()-2);
                                 String strOriginalDOs = (row.get("do_no")!= null)?row.get("do_no").toString():"";
-                                //LogUtil.info("--- Old Delivery Orders ", " ------- \n"+ strOriginalDOs);
-                                //LogUtil.info("--- New Delivery Orders ", " ------- \n"+ strDeliveryorders);
+
                                 if(!strDeliveryorders.equals(strOriginalDOs)){
+
                                     bChangeFlag = true;
                                     newRow.put("do_no", strDeliveryorders);
                                 }
                                 else {
+
                                     row.put("do_no", strOriginalDOs);
                                 }
 
@@ -239,13 +241,14 @@ public class LoadWarrantyNew {
                                 String strInvoices = strBInvoices.toString();
                                 strInvoices = strInvoices.substring(0, strInvoices.length()-2);
                                 String strOriginalInvs = (row.get("invoices")!= null)?row.get("invoices").toString():"";
-                                //LogUtil.info("--- Old Invoices ", " ------- \n"+ strInvoices);
-                                //LogUtil.info("--- New Invoices ", " ------- \n"+ strOriginalInvs);
+
                                 if(!strInvoices.equals(strOriginalInvs)){
+
                                     bChangeFlag = true;
                                     newRow.put("invoices", strInvoices);
                                 }
                                 else {
+
                                     row.put("invoices", strOriginalInvs);
                                 }
 
@@ -253,14 +256,14 @@ public class LoadWarrantyNew {
                                 //revision, increment it if there is change in the fields
                                 revision = (row.get("rev")!= null)?Integer.valueOf(row.get("rev").toString()):0;
                                 String processType = "#variable.processType#";
-                                LogUtil.info("Process Type",processType);
+
                                 String oldId = (String) row.get("id");
                                 if(bChangeFlag){
                                     // if new warranty record is generated then set that new id in process variable.]
-                                    PluginManager pluginManager = (PluginManager) AppUtil.getApplicationContext().getBean("pluginManager");
-                                    WorkflowManager wm = (WorkflowManager) pluginManager.getBean("workflowManager");
+                                    sendMailToCreator = "Y";
+                                    wm.activityVariable(assignment.getActivityId(),"send_mail_to_creator", sendMailToCreator);
                                     wm.activityVariable(assignment.getActivityId(),"rId", "#process.recordId#");
-                                    LogUtil.info("--- Change Flag", " ------- \n");
+
 
                                     //increment the revision only if the warranty status was in authorized status and move it to draft
                                     strOrgWarStatus = (String) row.get("warranty_status");
@@ -275,18 +278,17 @@ public class LoadWarrantyNew {
                                     newRow.put("newid", id);
                                     newRow.put("rev",String.valueOf(revision));
                                     newRow.put("warranty_status", "Draft");
-                                    LogUtil.info("--- New Row ", " ------- \n"+ newRow);
+
 
 
                                     row.put("rev_status", "Inactive");
-                                    LogUtil.info("--- Old Row ", " ------- \n"+ row);
-                                    LogUtil.info("--- Old Id for Line Item details ", " ------- \n"+oldId);
+
 
                                     // get new warranty details
                                     // get so numbers.
-                                    LogUtil.info("Universal SO Num",universalSoNum);
+
                                     String[] universalSoArray = universalSoNum.split(",");
-                                    LogUtil.info("Universal Array",""+universalSoArray);
+
                                     StringBuilder universalSoBuilder = new StringBuilder();
                                     for(String str : universalSoArray){
                                         universalSoBuilder.append("'"+str.trim()).append("',");
@@ -298,11 +300,10 @@ public class LoadWarrantyNew {
                                     f.setMultiRow(true);
                                     String strSOQueryParam= strbSOQueryParam.toString();
                                     String sLineItemsQuery = "SELECT distinct w.id, w.c_warrantyItem,w.c_equipment, w.c_warranty, w.c_warranty_status FROM app_fd_warranty w WHERE w.c_equipment IN (SELECT i.c_item_category FROM app_fd_do_master d join app_fd_items_master i ON d.c_item_code = i.c_item_code WHERE d.c_so_number in ("+universalSoNum+"))";
-                                    LogUtil.info("---Warranty Query ---", " ------- \n"+sLineItemsQuery);
 
                                     String startDate = warrantyrs.getString("c_warranty_start_date")!= null?warrantyrs.getString("c_warranty_start_date").toString():"";
                                     //(warrantyrs.getString("c_warranty_start_date")!= null)?warrantyrs.getString("c_projectStartDate").toString():"";
-                                    LogUtil.info("---Start Date: ---", " ------- \n"+startDate);
+
                                     //calculate end date using warranty
                                     Date dstrDate = new SimpleDateFormat("yyyy-mm-dd").parse(startDate);
                                     //LocalDate.parse(startDate);//
@@ -310,11 +311,11 @@ public class LoadWarrantyNew {
                                     // Displaying date
 
                                     Statement statementLineItem = null;
-                                    LogUtil.info("---Before Executing Warranty Query: ---", " ------- \n");
+
                                     statementLineItem = connection.createStatement();
                                     ResultSet rsLineItem = statementLineItem.executeQuery(sLineItemsQuery);
                                     while (rsLineItem.next()) {
-                                        LogUtil.info("---After Executing Warranty Query: ---", " ------- \n"+rsLineItem.getString(1));
+
                                         FormRow r1 = new FormRow();
                                         String newitemid = UuidGenerator.getInstance().getUuid();
                                         r1.put("id", newitemid);
@@ -324,15 +325,15 @@ public class LoadWarrantyNew {
                                         r1.put("startDate", startDate);
                                         r1.put("warranty",rsLineItem.getString(4));
                                         int months = Integer.valueOf(rsLineItem.getString(4));
-                                        LogUtil.info("---ResultSet: ---", " ------- \n"+rsLineItem.getString(2)+rsLineItem.getString(3));
+
                                         // Convert Date to Calendar
                                         Calendar c = Calendar.getInstance();
                                         c.setTime(dstrDate);
                                         c.add(Calendar.MONTH, months);
                                         Date newDate = c.getTime();
-                                        LogUtil.info("---New Date: ---", " ------- \n"+newDate.toString());
+
                                         String endDate = new SimpleDateFormat("yyyy-mm-dd").format(newDate);
-                                        LogUtil.info("---End Date: ---", " ------- \n"+endDate);
+
                                         r1.put("endDate", endDate);
                                         r1.put("warranty_status", rsLineItem.getString(5));
                                         f.add(r1);
@@ -340,33 +341,11 @@ public class LoadWarrantyNew {
                                     //Populate the form
                                     formDataDao.saveOrUpdate("projectItemsWarranty", "proj_items_warranty", f);
 
-
- /*FormRowSet rowsLineItemsData = formDataDao.find("projectItemsWarranty", "proj_items_warranty", "where c_warranty_ref =?", new Object[] {oldId}, null, null, null, null);
- rowsLineItemsData.setMultiRow(true);
- LogUtil.info("--- Before Line Item Details", " ------- \n" + rowsLineItemsData);
- FormRow newItemRow = new FormRow();
- if(rowsLineItemsData != null && !rowsLineItemsData.isEmpty()){
-
- LogUtil.info("--- Inside Line Item details ", " ------- \n"+oldId);
- //System.out.println(rowsWarrantyReviewData);
- for(FormRow	itemrow:rowsLineItemsData)
- {
- String newItemid = UuidGenerator.getInstance().getUuid();
- newItemRow.putAll(itemrow);
- newItemRow.setId(newItemid);
- newItemRow.put("warranty_ref", id);
- }
- rowsLineItemsData.add(newItemRow);
- LogUtil.info("--- After Line Item Details", " ------- \n" + rowsLineItemsData);
- //Populate the form
- formDataDao.saveOrUpdate("projectItemsWarranty", "proj_items_warranty", rowsLineItemsData);
- }*/
-
                                 }
                                 else if(bChangeFlag == false && processType != null && processType.equals("Reload")){
                                     String startDate = warrantyrs.getString("c_warranty_start_date")!= null?warrantyrs.getString("c_warranty_start_date").toString():"";
                                     String[] universalSoArray = strOriginalSOs.split(",");
-                                    LogUtil.info("Original array",""+universalSoArray);
+
                                     StringBuilder universalSoBuilder = new StringBuilder();
                                     for(String str : universalSoArray){
                                         universalSoBuilder.append("'"+str.trim()).append("',");
@@ -384,6 +363,8 @@ public class LoadWarrantyNew {
                             //Populate the form
                             //rows.add(row);
                             if(bChangeFlag){
+                                newRow.setModifiedBy("#currentUser.username#");
+                                newRow.setModifiedByName("#currentUser.fullName#");
                                 rowsWarrantyReviewData.add(newRow);
                             }
                             formDataDao.saveOrUpdate(formId, tableName, rowsWarrantyReviewData);
@@ -391,8 +372,7 @@ public class LoadWarrantyNew {
                         //there is no warranty generated, generate a new one and save it in db and then load the form
                         else{
                             //Set values
-                            LogUtil.info("--- Else Loop", " ------- \n"+id);
-                            System.out.println("Else Loop");
+
                             FormRow row = new FormRow();
                             row.setProperty("id",id);
 
@@ -419,9 +399,21 @@ public class LoadWarrantyNew {
                             landmark = (warrantyrs.getString("c_nearestLandmark")!= null)?warrantyrs.getString("c_nearestLandmark").toString():"";
                             row.setProperty("nearest_landmark",landmark);
 
-                            client = (warrantyrs.getString("c_custName")!= null)?warrantyrs.getString("c_custName").toString():"";
+                            client = (warrantyrs.getString("c_client")!= null)?warrantyrs.getString("c_client").toString():"";
                             row.setProperty("client",client);
-                            LogUtil.info("--- after setting properties", " ------- \n");
+
+                            String projectCreator = (warrantyrs.getString("createdBy")!= null)?warrantyrs.getString("createdBy").toString():"";
+                            DirectoryManager dm = (DirectoryManager) AppUtil.getApplicationContext().getBean("directoryManager");
+                            User user = dm.getUserById(projectCreator);
+                            String email = user.getEmail();
+
+                            row.setProperty("project_creator",projectCreator);
+                            row.setCreatedBy("#currentUser.username#");
+                            row.setCreatedByName("#currentUser.fullName#");
+                            LogUtil.info("Created By", projectCreator);
+                            sendMailToCreator = "Y";
+                            wm.activityVariable(assignment.getActivityId(),"project_creator_id", email);
+                            wm.activityVariable(assignment.getActivityId(),"send_mail_to_creator", sendMailToCreator);
 
                             StringBuilder strbSalesorders = new StringBuilder();
                             List orders = (List) salesorders.get(sprojectNumber);
@@ -429,9 +421,7 @@ public class LoadWarrantyNew {
                                 for (Object strSO : orders) {
                                     strbSalesorders.append(strSO + ", ");
                                 }
-
                                 String strSalesorders = strbSalesorders.toString();
-                                LogUtil.info("--- salesorders", " ------- \n"+strSalesorders);
                                 row.setProperty("sales_orders", strSalesorders.substring(0, strSalesorders.length()-2));
                             }
 
@@ -444,8 +434,6 @@ public class LoadWarrantyNew {
                                 String strDeliveryorders = strbDeliveryorders.toString();
                                 row.setProperty("do_no", strDeliveryorders.substring(0, strDeliveryorders.length()-2));
                             }
-
-
                             StringBuilder strBInvoices = new StringBuilder();
                             List invs = (List) invoices.get(sprojectNumber);
                             if(invs != null && invs.size() > 0){
@@ -464,9 +452,9 @@ public class LoadWarrantyNew {
 
                             //Create the warranty Number and set it to appropriate column
                             int modifiedWarrantyNumber = environmentVariableDao.getIncreasedCounter("warrantynumber", "Project"+ sprojectNumber, appDef);
-                            String strWN = String.format("%03d", new Object[]{modifiedWarrantyNumber});
+                            String strWN = String.format("%07d", new Object[]{modifiedWarrantyNumber});
                             //new Object[]{new Integer(modifiedWarrantyNumber)});
-                            System.out.println("warranty number -" + strWN);
+
                             warrantynumber = warrantynumber + strWN;
                             row.setProperty("wo_no",warrantynumber);
 
@@ -481,9 +469,6 @@ public class LoadWarrantyNew {
                             row.setProperty("rev_status", "Active");
 
                             row.setProperty("warranty_status", "Draft");
-
-
-
                             String formId = "warranty_review_form";
                             String tableName = "review_form";
 
@@ -495,19 +480,18 @@ public class LoadWarrantyNew {
                             f.setMultiRow(true);
                             String strSOQueryParam= strbSOQueryParam.toString();
                             String sLineItemsQuery = "SELECT distinct w.id, w.c_warrantyItem,w.c_equipment, w.c_warranty, w.c_warranty_status FROM app_fd_warranty w WHERE w.c_equipment IN (SELECT i.c_item_category FROM app_fd_do_master d join app_fd_items_master i ON d.c_item_code = i.c_item_code WHERE d.c_so_number in ("+strSOQueryParam.substring(0, strSOQueryParam.length()-1)+"))";
-                            LogUtil.info("---Warranty Query ---", " ------- \n"+sLineItemsQuery);
+
 
                             String startDate = sprojectEndDate;
                             //(warrantyrs.getString("c_projectStartDate")!= null)?warrantyrs.getString("c_projectStartDate").toString():"";
-                            LogUtil.info("---Start Date: ---", " ------- \n"+startDate);
+
                             //calculate end date using warranty
                             Date dstrDate = new SimpleDateFormat("yyyy-MM-dd").parse(startDate);
-                            //LocalDate.parse(startDate);//
-                            //LocalDate date = LocalDate.parse("2020-05-03");
+
                             // Displaying date
 
                             Statement statementLineItem = null;
-                            LogUtil.info("---Before Executing Warranty Query: ---", " ------- \n");
+
                             statementLineItem = connection.createStatement();
                             ResultSet rsLineItem = statementLineItem.executeQuery(sLineItemsQuery);
                             while (rsLineItem.next()) {
@@ -521,21 +505,21 @@ public class LoadWarrantyNew {
                                 r1.put("warranty",rsLineItem.getString(4));
                                 r1.put("startDate", startDate);
                                 int months = Integer.valueOf(rsLineItem.getString(4));
-                                LogUtil.info("---ResultSet: ---", " ------- \n"+rsLineItem.getString(2)+rsLineItem.getString(3));
+
                                 // Convert Date to Calendar
                                 Calendar c = Calendar.getInstance();
                                 c.setTime(dstrDate);
                                 c.add(Calendar.MONTH, months);
                                 c.add(Calendar.DAY_OF_MONTH,-1);
                                 Date newDate = c.getTime();
-                                LogUtil.info("---New Date: ---", " ------- \n"+newDate.toString());
+
                                 String endDate = new SimpleDateFormat("yyyy-MM-dd").format(newDate);
-                                LogUtil.info("---End Date: ---", " ------- \n"+endDate);
+
                                 r1.put("endDate", endDate);
                                 r1.put("warranty_status", rsLineItem.getString(5));
                                 f.add(r1);
                             }
-                            LogUtil.info("---After Executing Warranty Query: Outside While Loop ---", " ------- \n"+sLineItemsQuery);
+
                             //Populate the form
                             formDataDao.saveOrUpdate("projectItemsWarranty", "proj_items_warranty", f);
                         }
@@ -558,19 +542,21 @@ public class LoadWarrantyNew {
         }
         // Cash Sales Part
         else if(orderType.equals("Cash Sales")){
+            LogUtil.info("Running","Cash Sales");
             String warrantyOriginalId = null;
-            LogUtil.info("--- Cash Sales Record Id", " ------- \n"+id);
             String invoiceNumber = "#variable.invoicenumber#";
             String processType = "#variable.processType#";
             String sWarrantyStartDate = "";
-            LogUtil.info("--- invoiceNumber", " ------- \n"+invoiceNumber);
-
+            if(invoiceNumber == null || invoiceNumber.trim().equals("")){
+                LogUtil.info("If block for blank invoice number is running","");
+                AppService appService = (AppService) AppUtil.getApplicationContext().getBean("appService");
+                wm.activityVariable(assignment.getActivityId(),"terminated", "Yes");
+                return null;
+            }
             String sInvQuery = "select * from app_fd_do_master where c_invoiceNumber in ('"+invoiceNumber+"')";
 
-            LogUtil.info("--- Query for DO orders", " ------- \n"+sInvQuery);
             Connection connection = null;
             Statement statementSO = null;
-            LogUtil.info("--- Outside try block", " ------- \n");
             try {
                 DataSource ds = (DataSource)AppUtil.getApplicationContext().getBean("setupDataSource");
                 connection = ds.getConnection();
@@ -579,13 +565,11 @@ public class LoadWarrantyNew {
                 if(!connection.isClosed()) {
                     statementSO = connection.createStatement();
                     ResultSet rsDO = statementSO.executeQuery(sInvQuery);
-                    LogUtil.info("--- Query Executed", " ------- \n");
-                    //LogUtil.info("--- Outside resultset of DO orders", " ------- \n"+rsDO.toString());
+
                     while (rsDO.next()) {
-                        LogUtil.info("--- Inside resultset of DO orders", " ------- \n"+rsDO.toString());
                         String doNumber = rsDO.getString("c_do_Number");
                         sWarrantyStartDate = rsDO.getString("c_invoiceDate");
-                        LogUtil.info("--- DO number", " ------- \n"+doNumber);
+                        LogUtil.info("DO Details",doNumber);
                         if(doNumbers.containsKey(invoiceNumber))
                         {
                             ArrayList DOs = (ArrayList) doNumbers.get(invoiceNumber);
@@ -628,11 +612,11 @@ public class LoadWarrantyNew {
                     FormRow newRow = new FormRow();
                     FormRowSet rowsWarrantyReviewData = formDataDao.find("warranty_review_form", "review_form", "where c_invoices =? and c_rev_status=?", new Object[] {key,"Active"}, null, null, null, null);
                     rowsWarrantyReviewData.setMultiRow(true);
-                    LogUtil.info("--- Before If Else Loop", " ------- \n" + rowsWarrantyReviewData);
+
                     //there is a warranty record for the project number retrieve it and display
                     //if there are more than one warranty record, get the latest revision
                     if(rowsWarrantyReviewData != null && !rowsWarrantyReviewData.isEmpty()){
-                        LogUtil.info("--- If loop ", " ------- \n"+ id);
+                        LogUtil.info("Warranty Already Exists","");
                         for(FormRow	row:rowsWarrantyReviewData)
                         {
                             newRow.putAll(row);
@@ -674,8 +658,7 @@ public class LoadWarrantyNew {
                             String strInvoices = strBInvoices.toString();
                             strInvoices = strInvoices.substring(0, strInvoices.length()-2);
                             String strOriginalInvs = (row.get("invoices")!= null)?row.get("invoices").toString():"";
-                            //LogUtil.info("--- Old Invoices ", " ------- \n"+ strInvoices);
-                            //LogUtil.info("--- New Invoices ", " ------- \n"+ strOriginalInvs);
+
                             if(!strInvoices.equals(strOriginalInvs)){
                                 bChangeFlag = true;
                                 newRow.put("invoices", strInvoices);
@@ -688,13 +671,11 @@ public class LoadWarrantyNew {
                             //revision, increment it if there is change in the fields
                             revision = (row.get("rev")!= null)?Integer.valueOf(row.get("rev").toString()):0;
                             warrantyOriginalId = row.get("id").toString();
-                            LogUtil.info("---------------Original Id------------",warrantyOriginalId);
+
                             if(bChangeFlag){
                                 // if new warranty record is generated then set that new id in process variable.]
-                                PluginManager pluginManager = (PluginManager) AppUtil.getApplicationContext().getBean("pluginManager");
-                                WorkflowManager wm = (WorkflowManager) pluginManager.getBean("workflowManager");
                                 wm.activityVariable(assignment.getActivityId(),"rId", "#process.recordId#");
-                                LogUtil.info("--- Change Flag", " ------- \n");
+
                                 String oldId = (String) row.get("id");
                                 //increment the revision only if the warranty status was in authorized status and move it to draft
                                 strOrgWarStatus = (String) row.get("warranty_status");
@@ -709,12 +690,8 @@ public class LoadWarrantyNew {
                                 newRow.put("newid", id);
                                 newRow.put("rev",String.valueOf(revision));
                                 newRow.put("warranty_status", "Draft");
-                                LogUtil.info("--- New Row ", " ------- \n"+ newRow);
-
 
                                 row.put("rev_status", "Inactive");
-                                LogUtil.info("--- Old Row ", " ------- \n"+ row);
-                                LogUtil.info("--- Old Id for Line Item details ", " ------- \n"+oldId);
 
                                 String [] universalDoArray = universalDoNo.split(",");
                                 StringBuilder doBuilder = new StringBuilder();
@@ -731,31 +708,17 @@ public class LoadWarrantyNew {
                                 LogUtil.info("---Warranty Query ---", " ------- \n"+sLineItemsQuery);
 
                                 String startDate = sWarrantyStartDate;
-                                //(warrantyrs.getString("c_projectStartDate")!= null)?warrantyrs.getString("c_projectStartDate").toString():"";
-                                LogUtil.info("---Start Date: ---", " ------- \n"+startDate);
+
                                 //calculate end date using warranty
                                 Date dstrDate = new SimpleDateFormat("yyyy-MM-dd").parse(startDate);
-                                // ------------ Test Code -----------------
-     /*Calendar c = Calendar.getInstance();
-     c.setTime(dstrDate);
-     c.add(Calendar.MONTH, 18);
-     Date newDate = c.getTime();
-     LogUtil.info("---New Date: ---", " ------- \n"+newDate.toString());
-     String endDate = new SimpleDateFormat("yyyy-MM-dd").format(newDate);
-     LogUtil.info("---End Date: ---", " ------- \n"+endDate);*/
 
-                                // ------------ End Test Code -------------
-                                //LocalDate.parse(startDate);//
-                                //LocalDate date = LocalDate.parse("2020-05-03");
                                 // Displaying date
 
-
-                                LogUtil.info("---Before Executing Warranty Query: ---", " ------- \n");
                                 Statement statementLineItem = connection.createStatement();
                                 ResultSet rsLineItem = statementLineItem.executeQuery(sLineItemsQuery);
 
                                 while (rsLineItem.next()) {
-                                    LogUtil.info("---After Executing Warranty Query: ---", " ------- \n"+rsLineItem.getString(1));
+
                                     FormRow r1 = new FormRow();
                                     String newitemid = UuidGenerator.getInstance().getUuid();
                                     r1.put("id", newitemid);
@@ -766,49 +729,28 @@ public class LoadWarrantyNew {
                                     r1.put("startDate", startDate);
                                     //r1.put("warranty_ref",id);
                                     int months = Integer.valueOf(rsLineItem.getString(4));
-                                    LogUtil.info("---ResultSet: ---", " ------- \n"+rsLineItem.getString(2)+rsLineItem.getString(3));
+
                                     // Convert Date to Calendar
                                     Calendar c = Calendar.getInstance();
                                     c.setTime(dstrDate);
                                     c.add(Calendar.MONTH, months);
                                     c.add(Calendar.DAY_OF_MONTH,-1);
                                     Date newDate = c.getTime();
-                                    LogUtil.info("---New Date: ---", " ------- \n"+newDate.toString());
+
                                     String endDate = new SimpleDateFormat("yyyy-MM-dd").format(newDate);
-                                    LogUtil.info("---End Date: ---", " ------- \n"+endDate);
                                     r1.put("endDate", endDate);
                                     r1.put("warranty_status", rsLineItem.getString(5));
                                     f.add(r1);
                                 }
-                                System.out.println(sLineItemsQuery);
+
                                 //Populate the form
                                 formDataDao.saveOrUpdate("projectItemsWarranty", "proj_items_warranty", f);
 
 
-
- /*FormRowSet rowsLineItemsData = formDataDao.find("projectItemsWarranty", "proj_items_warranty", "where c_warranty_ref =?", new Object[] {oldId}, null, null, null, null);
- rowsLineItemsData.setMultiRow(true);
- LogUtil.info("--- Before Line Item Details", " ------- \n" + rowsLineItemsData);
- FormRow newItemRow = new FormRow();
- if(rowsLineItemsData != null && !rowsLineItemsData.isEmpty()){
-
- LogUtil.info("--- Inside Line Item details ", " ------- \n"+oldId);
- //System.out.println(rowsWarrantyReviewData);
- for(FormRow	itemrow:rowsLineItemsData)
- {
- String newItemid = UuidGenerator.getInstance().getUuid();
- newItemRow.putAll(itemrow);
- newItemRow.setId(newItemid);
- newItemRow.put("warranty_ref", id);
- }
- rowsLineItemsData.add(newItemRow);
- LogUtil.info("--- After Line Item Details", " ------- \n" + rowsLineItemsData);
- //Populate the form
- formDataDao.saveOrUpdate("projectItemsWarranty", "proj_items_warranty", rowsLineItemsData);
-}*/                    }
+                            }
                             else if(bChangeFlag == false && processType != null && processType.equals("Reload")){
                                 String[] universalSoArray = strOriginalDOs.split(",");
-                                LogUtil.info("Original array",""+universalSoArray);
+
                                 StringBuilder universalSoBuilder = new StringBuilder();
                                 for(String str : universalSoArray){
                                     universalSoBuilder.append("'"+str.trim()).append("',");
@@ -826,6 +768,8 @@ public class LoadWarrantyNew {
                         //Populate the form
                         //rows.add(row);
                         if(bChangeFlag){
+                            newRow.setModifiedBy("#currentUser.username#");
+                            newRow.setModifiedByName("#currentUser.fullName#");
                             rowsWarrantyReviewData.add(newRow);
                         }
                         formDataDao.saveOrUpdate(formId, tableName, rowsWarrantyReviewData);
@@ -833,8 +777,7 @@ public class LoadWarrantyNew {
                     //there is no warranty generated, generate a new one and save it in db and then load the form
                     else{
                         //Set values
-                        LogUtil.info("--- Else Loop", " ------- \n"+id);
-                        System.out.println("Else Loop");
+                        LogUtil.info("New Warranty Generation","Warranty Generation");
                         FormRow row = new FormRow();
                         row.setProperty("id",id);
 
@@ -872,30 +815,25 @@ public class LoadWarrantyNew {
 
                         //Create the warranty Number and set it to appropriate column
                         int modifiedWarrantyNumber = environmentVariableDao.getIncreasedCounter("warrantynumber", "Invoice"+ invoiceNumber, appDef);
-                        String strWN = String.format("%03d", new Object[]{modifiedWarrantyNumber});
-                        //new Object[]{new Integer(modifiedWarrantyNumber)});
-                        System.out.println("warranty number -" + strWN);
+                        String strWN = String.format("%07d", new Object[]{modifiedWarrantyNumber});
+                        LogUtil.info("Warranty Number",strWN);
                         warrantynumber = warrantynumber + strWN;
                         row.setProperty("wo_no",warrantynumber);
+                        row.setModifiedBy("#currentUser.username#");
+                        row.setModifiedByName("#currentUser.fullName#");
 
                         //warranty date
                         row.setProperty("warr_date",ft.format(warrantyDate));
 
-                        //revision =0, as there warranty is generated for the first time for this project
+
                         revision = 0;
-                        //environmentVariableDao.getIncreasedCounter("rev-"+ sprojectNumber, "new", appDef);
                         row.setProperty("rev",String.valueOf(revision));
 
                         row.setProperty("rev_status", "Active");
 
                         row.setProperty("warranty_status", "Draft");
-                        if("#variable.processType#".equals("Reload")){
-                            row.setDateModified(new Date());
-                        }
-                        else{
-                            row.setDateCreated(new Date());
-                            row.setDateModified(new Date());
-                        }
+
+
 
                         String formId = "warranty_review_form";
                         String tableName = "review_form";
@@ -903,39 +841,28 @@ public class LoadWarrantyNew {
                         //Populate the form
                         rowsWarrantyReviewData.add(row);
                         formDataDao.saveOrUpdate(formId, tableName, rowsWarrantyReviewData);
-                        LogUtil.info("---Before Warranty Query ---", " ------- \n");
+                        LogUtil.info("Generated New ","Cash Sale Warranty");
                         FormRowSet f = new FormRowSet();
                         f.setMultiRow(true);
                         String strDOQueryParam= strbDOQueryParam.toString();
                         String sLineItemsQuery = "SELECT distinct w.id, w.c_warrantyItem,w.c_equipment, w.c_warranty, w.c_warranty_status FROM app_fd_warranty w WHERE w.c_equipment IN (SELECT i.c_item_category FROM app_fd_do_master d join app_fd_items_master i ON d.c_item_code = i.c_item_code WHERE d.c_do_number in ("+strDOQueryParam.substring(0, strDOQueryParam.length()-1)+"))";
-                        LogUtil.info("---Warranty Query ---", " ------- \n"+sLineItemsQuery);
+
 
                         String startDate = sWarrantyStartDate;
                         //(warrantyrs.getString("c_projectStartDate")!= null)?warrantyrs.getString("c_projectStartDate").toString():"";
-                        LogUtil.info("---Start Date: ---", " ------- \n"+startDate);
+
                         //calculate end date using warranty
                         Date dstrDate = new SimpleDateFormat("yyyy-MM-dd").parse(startDate);
-                        // ------------ Test Code -----------------
- /*Calendar c = Calendar.getInstance();
- c.setTime(dstrDate);
- c.add(Calendar.MONTH, 18);
- Date newDate = c.getTime();
- LogUtil.info("---New Date: ---", " ------- \n"+newDate.toString());
- String endDate = new SimpleDateFormat("yyyy-MM-dd").format(newDate);
- LogUtil.info("---End Date: ---", " ------- \n"+endDate);*/
-
-                        // ------------ End Test Code -------------
-                        //LocalDate.parse(startDate);//
-                        //LocalDate date = LocalDate.parse("2020-05-03");
-                        // Displaying date
 
 
-                        LogUtil.info("---Before Executing Warranty Query: ---", " ------- \n");
+
+
+
                         Statement statementLineItem = connection.createStatement();
                         ResultSet rsLineItem = statementLineItem.executeQuery(sLineItemsQuery);
 
                         while (rsLineItem.next()) {
-                            LogUtil.info("---After Executing Warranty Query: ---", " ------- \n"+rsLineItem.getString(1));
+
                             FormRow r1 = new FormRow();
                             String newitemid = UuidGenerator.getInstance().getUuid();
                             r1.put("id", newitemid);
@@ -945,21 +872,21 @@ public class LoadWarrantyNew {
                             r1.put("warranty_ref","#process.recordId#");
                             r1.put("startDate", startDate);
                             int months = Integer.valueOf(rsLineItem.getString(4));
-                            LogUtil.info("---ResultSet: ---", " ------- \n"+rsLineItem.getString(2)+rsLineItem.getString(3));
+
                             // Convert Date to Calendar
                             Calendar c = Calendar.getInstance();
                             c.setTime(dstrDate);
                             c.add(Calendar.MONTH, months);
                             c.add(Calendar.DAY_OF_MONTH,-1);
                             Date newDate = c.getTime();
-                            LogUtil.info("---New Date: ---", " ------- \n"+newDate.toString());
+
                             String endDate = new SimpleDateFormat("yyyy-MM-dd").format(newDate);
-                            LogUtil.info("---End Date: ---", " ------- \n"+endDate);
+
                             r1.put("endDate", endDate);
                             r1.put("warranty_status", rsLineItem.getString(5));
                             f.add(r1);
                         }
-                        System.out.println(sLineItemsQuery);
+
                         //Populate the form
                         formDataDao.saveOrUpdate("projectItemsWarranty", "proj_items_warranty", f);
                     }
@@ -967,7 +894,7 @@ public class LoadWarrantyNew {
                 }
             }
             catch (Exception e) {
-                e.printStackTrace();
+
                 LogUtil.info("--- Catch Exception =", " ------- \n"+e.getMessage());
 
             }
@@ -985,8 +912,7 @@ public class LoadWarrantyNew {
     }
 
     public static void newItemUploadForProject(String soNum, String startDate,Connection connection, String id,FormDataDao formDataDao) throws SQLException, ParseException {
-        LogUtil.info("Update Warranty Program","Update Warranty Program");
-        LogUtil.info("Warranty Item Id",id);
+
         // delete old warranty items.
         String formId = "projectItemsWarranty";
         String tableName = "proj_items_warranty";
@@ -997,10 +923,10 @@ public class LoadWarrantyNew {
         FormRowSet f = new FormRowSet();
         f.setMultiRow(true);
         String sLineItemsQuery = "SELECT distinct w.id, w.c_warrantyItem,w.c_equipment, w.c_warranty, w.c_warranty_status FROM app_fd_warranty w WHERE w.c_equipment IN (SELECT i.c_item_category FROM app_fd_do_master d join app_fd_items_master i ON d.c_item_code = i.c_item_code WHERE d.c_so_number in ("+soNum+"))";
-        LogUtil.info("---Warranty Query ---", " ------- \n"+sLineItemsQuery);
+
 
         //(warrantyrs.getString("c_warranty_start_date")!= null)?warrantyrs.getString("c_projectStartDate").toString():"";
-        LogUtil.info("---Start Date: ---", " ------- \n"+startDate);
+
         //calculate end date using warranty
         Date dstrDate = new SimpleDateFormat("yyyy-mm-dd").parse(startDate);
         //LocalDate.parse(startDate);//
@@ -1008,7 +934,7 @@ public class LoadWarrantyNew {
         // Displaying date
 
         Statement statementLineItem = null;
-        LogUtil.info("---Before Executing Warranty Query: ---", " ------- \n");
+
         statementLineItem = connection.createStatement();
         ResultSet rsLineItem = statementLineItem.executeQuery(sLineItemsQuery);
         while (rsLineItem.next()) {
@@ -1022,15 +948,14 @@ public class LoadWarrantyNew {
             r1.put("startDate", startDate);
             r1.put("warranty",rsLineItem.getString(4));
             int months = Integer.valueOf(rsLineItem.getString(4));
-            LogUtil.info("---ResultSet: ---", " ------- \n"+rsLineItem.getString(2)+rsLineItem.getString(3));
+
             // Convert Date to Calendar
             Calendar c = Calendar.getInstance();
             c.setTime(dstrDate);
             c.add(Calendar.MONTH, months);
             Date newDate = c.getTime();
-            LogUtil.info("---New Date: ---", " ------- \n"+newDate.toString());
+
             String endDate = new SimpleDateFormat("yyyy-mm-dd").format(newDate);
-            LogUtil.info("---End Date: ---", " ------- \n"+endDate);
             r1.put("endDate", endDate);
             r1.put("warranty_status", rsLineItem.getString(5));
             f.add(r1);
@@ -1048,24 +973,21 @@ public class LoadWarrantyNew {
                 formDataDao.find(formId,tableName,"where c_warranty_ref=?", new Object[]{id},null,false,null,null);
         formDataDao.delete(formId,tableName,warrantyItemSet);
 
-        LogUtil.info("Cash Sale Warranty Load","Without Change");
         // create new records
         FormRowSet f = new FormRowSet();
         f.setMultiRow(true);
         String sLineItemsQuery = "SELECT distinct w.id, w.c_warrantyItem,w.c_equipment, w.c_warranty, w.c_warranty_status FROM app_fd_warranty w WHERE w.c_equipment IN (SELECT i.c_item_category FROM app_fd_do_master d join app_fd_items_master i ON d.c_item_code = i.c_item_code WHERE d.c_do_number in ("+doNum+"))";
-        LogUtil.info("Qery",sLineItemsQuery);
-        LogUtil.info("DO NUMBER ----------",doNum);
+
         //(warrantyrs.getString("c_projectStartDate")!= null)?warrantyrs.getString("c_projectStartDate").toString():"";
         LogUtil.info("---Start Date: ---", " ------- \n"+startDate);
         //calculate end date using warranty
         Date dstrDate = new SimpleDateFormat("yyyy-MM-dd").parse(startDate);
-        // ------------ Test Code -----------------
-        LogUtil.info("---Before Executing Warranty Query: ---", " ------- \n");
+
         Statement statementLineItem = connection.createStatement();
         ResultSet rsLineItem = statementLineItem.executeQuery(sLineItemsQuery);
 
         while (rsLineItem.next()) {
-            LogUtil.info("---After Executing Warranty Query: ---", " ------- \n"+rsLineItem.getString(1));
+
             FormRow r1 = new FormRow();
             String newitemid = UuidGenerator.getInstance().getUuid();
             r1.put("id", newitemid);
@@ -1075,16 +997,15 @@ public class LoadWarrantyNew {
             r1.put("startDate", startDate);
             r1.put("warranty_ref",id);
             int months = Integer.valueOf(rsLineItem.getString(4));
-            LogUtil.info("---ResultSet: ---", " ------- \n"+rsLineItem.getString(2)+rsLineItem.getString(3));
+
             // Convert Date to Calendar
             Calendar c = Calendar.getInstance();
             c.setTime(dstrDate);
             c.add(Calendar.MONTH, months);
             c.add(Calendar.DAY_OF_MONTH,-1);
             Date newDate = c.getTime();
-            LogUtil.info("---New Date: ---", " ------- \n"+newDate.toString());
+
             String endDate = new SimpleDateFormat("yyyy-MM-dd").format(newDate);
-            LogUtil.info("---End Date: ---", " ------- \n"+endDate);
             r1.put("endDate", endDate);
             r1.put("warranty_status", rsLineItem.getString(5));
             f.add(r1);

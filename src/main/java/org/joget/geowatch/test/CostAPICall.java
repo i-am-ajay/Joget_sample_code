@@ -1,7 +1,9 @@
 package org.joget.geowatch.test;
 
+import org.joget.directory.model.User;
 import org.json.JSONObject;
 
+import javax.servlet.http.HttpServletRequest;
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.IOException;

@@ -19,20 +19,21 @@ import org.joget.apps.form.dao.FormDataDao;
 import org.joget.apps.form.model.FormRow;
 import org.joget.apps.form.model.*;
 import org.joget.apps.form.service.*;
-import org.joget.commons.util.LogUtil;
-
 import java.sql.*;
 import java.util.*;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import org.joget.commons.util.LogUtil;
 
 public class DataIntegrationDO {
     static Connection con = null;
 
     public static void integrationForDo() throws SQLException {
-        LogUtil.info();
-        LocalDate today = LocalDate.now();
-        LocalDate previousDay = today.minusDays(1);
+        //LocalDate today = LocalDate.now();
+        //LocalDate previousDay = today.minusDays(60);
+        LocalDate today = LocalDate.of(2022,4,1);
+        LocalDate previousDay = LocalDate.of(2022,3,1);
+        LogUtil.info("Running DO Master Query","");
         try {
             //Build Url for connecting to Oracle DB
             String url = "jdbc:oracle:thin:#envVariable.jdbcURL#";
@@ -50,8 +51,8 @@ public class DataIntegrationDO {
                 //Populate DO Master Form
                 System.out.println("Connected");
 
-                /*String DOMasterQuery = "select * from apps.XXOIC_JOGETIN_DO_SHIPMENT_V " +
-                        "where SO_NUMEBR IN ('SO-113510','SO-113511','SO-109457')";*/
+            /*String DOMasterQuery = "select * from apps.XXOIC_JOGETIN_DO_SHIPMENT_V " +
+                        "where SO_NUMEBR IN ('SO-114030')";*/
                 String DOMasterQuery = "select * from apps.XXOIC_JOGETIN_DO_SHIPMENT_V " +
                         "where LAST_UPDATE_DATE >= to_date(?, 'YYYY-MM-DD') " +
                         "AND LAST_UPDATE_DATE < to_date(?,'YYYY-MM-DD')";
@@ -60,11 +61,21 @@ public class DataIntegrationDO {
                 dostmt.setString(2, today.toString());
                 ResultSet dors = dostmt.executeQuery();
                 System.out.println("Statement executed");
+                int count = 0;
+                int batchCount = 0;
+                int batchNo = 0;
+                FormDataDao formDataDao = (FormDataDao) AppUtil.getApplicationContext().getBean("formDataDao");
+                FormRowSet rowsDOMasterData = new FormRowSet();
+                String formIdDO = "do_master_form";
+                String tableNameDO = "do_master";
+                String fieldIDDO = "do_Number";
                 while (dors.next()) {
-                    FormRowSet rowsDOMasterData = new FormRowSet();
+                    batchCount++;
+                    count++;
+                    //LogUtil.info("View",dors.getString("DO_NUMBER")+" Last Invoice Date - "+dors.getString("LAST_UPDATE_DATE"));
                     FormRow row = new FormRow();
                     //String uuid = UuidGenerator.getInstance().getUuid();
-                    FormDataDao formDataDao = (FormDataDao) AppUtil.getApplicationContext().getBean("formDataDao");
+
                     //Set values - Id using Primary Key
                     String strRefId = (dors.getString("REFERENCE_ID") != null) ? dors.getString("REFERENCE_ID").toString() : "";
                     row.setProperty("id", strRefId);
@@ -101,20 +112,22 @@ public class DataIntegrationDO {
 
                     String strInvoiceDate = (dors.getString("INVOICE_DATE") != null) ? dors.getString("INVOICE_DATE").toString() : "";
                     row.setProperty("invoiceDate", strInvoiceDate);
-
-
-                    String formIdDO = "do_master_form";
-                    String tableNameDO = "do_master";
-                    String fieldIDDO = "do_Number";
-
                     //Populate the form
                     //FormRow row = formDataDao.load(formId, tableName, id);
                     rowsDOMasterData.add(row);
-                    formDataDao.saveOrUpdate(formIdDO, tableNameDO, rowsDOMasterData);
+                    if(batchCount >= 100){
+                        batchNo++;
+                        formDataDao.saveOrUpdate(formIdDO, tableNameDO, rowsDOMasterData);
+                        LogUtil.info("Batch Saved",batchNo+"");
+                        rowsDOMasterData.clear();
+                        batchCount = 0;
+                    }
+
                 }
+                LogUtil.info("Count of Records Feb",count+"");
             }
         } catch (Exception e) {
-            System.err.println("Exception: " + e.getMessage());
+            LogUtil.info("Exception: ",  e.getMessage());
         } finally {
             try {
                 if (con != null) {
@@ -123,6 +136,7 @@ public class DataIntegrationDO {
             } catch (SQLException e) {
             }
         }
+        LogUtil.info("End LogUtil","---------------------------------------------");
     }
 }
 DataIntegrationDO.integrationForDo();

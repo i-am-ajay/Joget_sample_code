@@ -20,10 +20,20 @@ import javax.servlet.http.HttpServletRequest;
 
 public class DataIntegration {
     static Connection con = null;
+    static String formId = "last_run_scheduler";
+    static String tableName = "last_run_scheduler";
+    static String primaryKey = "Warranty Integration";
+    static String lastRunDate = "";
+    static FormDataDao lastRunTable = null;
+    static FormRow lastRunDateRow = null;
     public static Object execute(WorkflowAssignment assignment, AppDefinition appDef, HttpServletRequest request)  throws SQLException, ClassNotFoundException {
+        // get last run date
+        lastRunTable = (FormDataDao)AppUtil.getApplicationContext().getBean("formDataDao");
+        lastRunDateRow = lastRunTable.load(formId,tableName,primaryKey);
+        lastRunDate = lastRunDateRow.getProperty("last_run_date");
         LogUtil.info("DataIntegration Process Start","");
         LocalDate today = LocalDate.now();
-        LocalDate previousDay = today.minusDays(1);
+        //LocalDate previousDay = today.minusDays(10);
         //LocalDate today = LocalDate.now().plusDays(1);
         //LocalDate previousDay = LocalDate.now();
         //LocalDate today = LocalDate.now();
@@ -48,9 +58,9 @@ public class DataIntegration {
                 //Populate Item Master Form
                 String itemMasterQuery = "select * from apps.XXOIC_JOGETIN_ITEMMASTR_CAT_V where "+
                         "LAST_UPDATE_DATE >= to_date(?, 'YYYY-MM-DD') " +
-                        "AND LAST_UPDATE_DATE < to_date(?,'YYYY-MM-DD')";
+                        "AND LAST_UPDATE_DATE <= to_date(?,'YYYY-MM-DD')";
                 PreparedStatement itemstmt = con.prepareStatement(itemMasterQuery);
-                itemstmt.setString(1,previousDay.toString());
+                itemstmt.setString(1,lastRunDate);
                 itemstmt.setString(2,today.toString());
                 //itemstmt.setDate(LocalDate.);
                 ResultSet itemrs = itemstmt.executeQuery();
@@ -64,7 +74,6 @@ public class DataIntegration {
                     String itemMasterId = itemMasterOrgId + "_" + itemMasterInvId;
                     //Set ID - Primary Keys
                     row.setProperty("id", itemMasterId);
-
                     row.setProperty("organization_id", itemMasterOrgId);
                     row.setProperty("inventory_item_id", itemMasterInvId);
                     String strItemcode = (itemrs.getString("ITEM_CODE") != null) ? itemrs.getString("ITEM_CODE").toString() : "";
@@ -98,7 +107,7 @@ public class DataIntegration {
                         "where LAST_UPDATE_DATE >= to_date(?, 'YYYY-MM-DD') " +
                         "AND LAST_UPDATE_DATE < to_date(?,'YYYY-MM-DD')";
                 PreparedStatement dostmt = con.prepareStatement(DOMasterQuery);
-                dostmt.setString(1, previousDay.toString());
+                dostmt.setString(1, lastRunDate);
                 dostmt.setString(2, today.toString());
                 ResultSet dors = dostmt.executeQuery();
                 while (dors.next()) {
@@ -158,7 +167,7 @@ public class DataIntegration {
                 String equipmtMasterQuery = "select * from apps.XXOIC_JOGETIN_DO_EQUIPMENT_V where DO_CAPTURE_DATE >= to_date(?, 'YYYY-MM-DD') " +
                         "AND DO_CAPTURE_DATE < to_date(?,'YYYY-MM-DD')";
                 PreparedStatement equipmtstmt = con.prepareStatement(equipmtMasterQuery);
-                equipmtstmt.setString(1,previousDay.toString());
+                equipmtstmt.setString(1,lastRunDate);
                 equipmtstmt.setString(2,today.toString());
                 ResultSet equipmtrs = equipmtstmt.executeQuery();
                 while (equipmtrs.next()) {
@@ -200,7 +209,7 @@ public class DataIntegration {
                 String stockMasterQuery =  "Select * from apps.XXOIC_JOGETIN_ITEM_COSTSTOCK_V  where LAST_UPDATE_DATE >= to_date(?, 'YYYY-MM-DD') " +
                         "AND LAST_UPDATE_DATE < to_date(?,'YYYY-MM-DD')";
                 PreparedStatement stockstmt = con.prepareStatement(stockMasterQuery);
-                stockstmt.setString(1,previousDay.toString());
+                stockstmt.setString(1,lastRunDate);
                 stockstmt.setString(2,today.toString());
                 ResultSet stockrs = stockstmt.executeQuery();
                 while (stockrs.next()) {
@@ -236,7 +245,7 @@ public class DataIntegration {
                         "LAST_UPDATE_DATE >= to_date(?, 'YYYY-MM-DD') " +
                         "AND LAST_UPDATE_DATE < to_date(?,'YYYY-MM-DD')";
                 PreparedStatement projectstmt = con.prepareStatement(ProjectMasterQuery);
-                projectstmt.setString(1,previousDay.toString());
+                projectstmt.setString(1,lastRunDate);
                 projectstmt.setString(2,today.toString());
                 ResultSet projectrs = projectstmt.executeQuery();
                 while (projectrs.next()) {
@@ -315,6 +324,7 @@ public class DataIntegration {
                     //Populate the form
                     rowsProjectMasterData.add(row);
                     formDataDao.saveOrUpdate(formIdProject, tableNameProject, rowsProjectMasterData);
+                    updateLastRunDate();
                 }
             }
         }
@@ -324,13 +334,23 @@ public class DataIntegration {
         finally {
             try {
                 if(con != null) {
+                    LogUtil.info("Closing Connection","Closing Connection");
                     con.close();
                 }
             }
-            catch(SQLException e) {}
+            catch(SQLException e) {
+                LogUtil.info("Error Being Thrown during connection closing","");
+            }
         }
         LogUtil.info("DataIntegration Process End","");
         return null;
     }
+
+    private static void updateLastRunDate() {
+        lastRunDateRow.setProperty("last_run_date",LocalDate.now().toString());
+        FormRowSet set = new FormRowSet();
+        set.add(lastRunDateRow);
+        lastRunTable.saveOrUpdate(formId,tableName,set);
+    }
 }
-return DataIntegration.execute(workflowAssignment, appDef, request);
+return DataIntegration.execute(null, null, null);

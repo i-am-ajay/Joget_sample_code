@@ -50,7 +50,7 @@ public class LoadWarrantyTool3 {
 
         Connection con = null;
         Connection oracleConnection = null;
-        LogUtil.info("Current Id",curr_id);
+
         FormDataDao formDataDao = (FormDataDao) AppUtil.getApplicationContext().getBean("formDataDao");
         try {
             LogUtil.info("Record Id","#variable.rId#");
@@ -69,44 +69,34 @@ public class LoadWarrantyTool3 {
 
 
             FormRow warranty = formDataDao.load("warranty_review_form", "review_form", curr_id);
-            LogUtil.info("--- 3rd Bean Shell Tool Running for Warranty Certificate Table ", " ------- \n");
+
             if(warranty != null ){
-                LogUtil.info("--- If loop ", " ------- \n"+ curr_id);
-
                 strdo_no = (warranty.get("do_no")!= null)?warranty.get("do_no").toString():"";
-
-                LogUtil.info("--- DO numbers ", " ------- \n"+strdo_no);
-
                 String[] DO_Nums = strdo_no.split(",");
                 ArrayList DOs = new ArrayList(Arrays.asList(DO_Nums));
 
                 String url = "jdbc:oracle:thin:#envVariable.jdbcURL#";
                 String username = "#envVariable.jdbcUserName#";
                 String password = "#envVariable.jdbcPassword#";
-
+                Class.forName("oracle.jdbc.driver.OracleDriver");
+                oracleConnection = DriverManager.getConnection(url, username, password);
 
                 for(Object strObj : DOs){
                     String strDO = strObj.toString();
                     returnItemMap.clear();
                     // get return information
-                    Class.forName("oracle.jdbc.driver.OracleDriver");
-                    oracleConnection = DriverManager.getConnection(url, username, password);
                     if(!oracleConnection.isClosed() ){
-                        LogUtil.info("Oracle DO Number",strDO);
                         String returnQuery = "select DO_NUMBER,ITEM_CODE,SUM(RETURNED_QTY) return_qty from apps.XXOIC_JOGETIN_DO_RETURN_ITEM WHERE DO_NUMBER = ? GROUP BY DO_NUMBER,ITEM_CODE";
                         PreparedStatement returnStmt = oracleConnection.prepareStatement(returnQuery);
                         returnStmt.setString(1,strDO.trim());
                         ResultSet returnSet = returnStmt.executeQuery();
                         while(returnSet.next()){
-                            LogUtil.info("Oracle loop","Running");
-                            LogUtil.info("Item Code",returnSet.getString(2));
-                            LogUtil.info("qty",returnSet.getString(3));
                             returnItemMap.put(returnSet.getString(2),returnSet.getString(3));
                         }
                         returnStmt.close();
                     }
 
-                    LogUtil.info("--- DO number ", " ------- \n"+strDO);
+
                     strDO = strDO.replaceFirst("^\\s*", "");
                     // execute SQL query
                     if(!con.isClosed()) {
@@ -114,11 +104,11 @@ public class LoadWarrantyTool3 {
 
 
                         String stmt = "SELECT d.c_item_code,i.c_description, d.c_shipped_qty, i.c_item_category FROM app_fd_items_master AS i inner join app_fd_do_master AS d ON i.c_item_code=d.c_item_code"
-                                +" where d.c_do_Number='"+strDO+"'"
+                                +" where d.c_do_Number='"+strDO+"' and i.c_item_category <> 'NEW'"
                                 +" GROUP BY d.c_item_code, i.c_item_category,i.c_description, d.c_shipped_qty";
 
 
-                        LogUtil.info("--- Query ", " ------- \n"+stmt);
+
                         //stmt.setObject(1, );
                         Statement statement = con.createStatement();
                         ResultSet rs = statement.executeQuery(stmt);
@@ -133,9 +123,7 @@ public class LoadWarrantyTool3 {
                             rShipQty = (returnItemMap.get(stritemCode)==null || returnItemMap.get(stritemCode).equals(""))?0:Integer.parseInt(returnItemMap.get(stritemCode).toString());
                             LogUtil.info("Return Qty",""+rShipQty);
                             iShipQty = iShipQty - rShipQty;*/
-                            LogUtil.info("Ship Qty",""+iShipQty);
-                            LogUtil.info("--- Item Code ", " ------- \n"+stritemCode);
-                            LogUtil.info("--- ShippedQty ", " ------- \n"+iShipQty);
+
 
                             if(item_sum.containsKey(stritemCode))
                             {
@@ -159,7 +147,7 @@ public class LoadWarrantyTool3 {
                     }
 
                 }
-                LogUtil.info("Return Part Executed","Return part over");
+
 
             }
 
@@ -185,29 +173,14 @@ public class LoadWarrantyTool3 {
             formDataDao.delete(formId,tableName,warrantyItemSet);
         }
 
-        FormRowSet starndardWarrantySet = formDataDao.find("warrantyValidity","warranty",null,null,null,null,null,null);
-        HashSet equipmentSet = new HashSet();
-        for(FormRow row : starndardWarrantySet){
-            equipmentSet.add(row.getProperty("equipment"));
-        }
-        boolean itemFlag = false;
-        boolean equipmentFlag = false;
-        String items = "";
         for (Object key: item_sum.keySet()) {
             FormRow row = new FormRow();
             // Reduce return qty from total qty
             int rShipQty = (returnItemMap.get(key)==null || returnItemMap.get(key).equals(""))?0:Integer.parseInt(returnItemMap.get(key).toString());
             int iQty = (int)item_sum.get(key);
             iQty = iQty - rShipQty;
-            LogUtil.info("Item Qty",iQty+"");
-            LogUtil.info("Returned Qty",rShipQty +"");
+
             String newitemid = UuidGenerator.getInstance().getUuid();
-            if(!equipmentSet.contains(item_categry.get(key))){
-                continue;
-            }
-            String item = "'"+(String)key+"',";
-            items+=item;
-            equipmentFlag = true;
             row.setProperty("id", newitemid);
             row.setProperty("itemCode", key.toString());
             row.setProperty("shippedQty", iQty+"");
@@ -215,66 +188,9 @@ public class LoadWarrantyTool3 {
             row.setProperty("itemDescription", item_cat.get(key)+"");
             row.setProperty("warranty_ref", curr_id);
             rows.add(row);
-            LogUtil.info("Item code: "+key,"Qty: "+iQty+"");
-        }
-        if(!equipmentFlag){
-            FormRow row = new FormRow();
-            row.setProperty("id",UuidGenerator.getInstance().getUuid());
-            row.setProperty("itemDescription","This warranty has no item to return");
-            row.setProperty("warranty_ref", curr_id);
-            rows.add(row);
-        }
-        else{
-            if(items != null && !items.isEmpty() && items.length() > 1){
-                items = items.substring(0, items.length() - 1);
-                LogUtil.info("---------Item for equipment",items);
-                updateEquipmentType(items);
-            }
         }
         formDataDao.saveOrUpdate("certificate_equipment_details", "equipment_details", rows);
         return null;
-    }
-
-    public static void updateEquipmentType(String items){
-        Connection connection = null;
-        String equipmentType = "";
-        try{
-            DataSource ds = (DataSource)AppUtil.getApplicationContext().getBean("setupDataSource");
-            connection = ds.getConnection();
-            PreparedStatement statementSo = connection.prepareStatement("SELECT c_segment_3 FROM app_fd_items_master where c_item_code IN ("+items+")");
-            ResultSet set = statementSo.executeQuery();
-            Set equipSet = new HashSet();
-            while(set.next()){
-                equipSet.add(set.getString(1));
-            }
-
-            for(Object equipObj : equipSet){
-                equipmentType += equipObj +", ";
-            }
-            if(equipmentType.length() > 2){
-                equipmentType = equipmentType.substring(0,equipmentType.length() - 2);
-            }
-        }
-        catch(SQLException ex){
-            LogUtil.error("TypeOfEquipment",ex,ex.getMessage());
-        }
-        finally{
-            try{
-                if(connection != null && !connection.isClosed()){
-                    connection.close();
-                }
-            }
-            catch(SQLException ex){
-
-            }
-        }
-        String id = "#variable.rId#";
-        FormDataDao dao = (FormDataDao) AppUtil.getApplicationContext().getBean("formDataDao");
-        FormRow warrantyRow = dao.load("warranty_review_form","review_form",id);
-        FormRowSet warrantySet = new FormRowSet();
-        warrantyRow.setProperty("type_equipment",equipmentType);
-        warrantySet.add(warrantyRow);
-        dao.saveOrUpdate("warranty_review_form", "review_form", warrantySet);
     }
 }
 return LoadWarrantyTool3.execute(workflowAssignment, appDef, request);

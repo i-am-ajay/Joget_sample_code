@@ -14,6 +14,7 @@ public class AssignedColumnCountFormatter {
     public String format(){
         String assignCount = "0";
         String totalCount = "0";
+
         String billToCode = (String)row.get("invoice_e_status");
         DataSource ds = (DataSource) AppUtil.getApplicationContext().getBean("setupDataSource");
         Connection con = null;

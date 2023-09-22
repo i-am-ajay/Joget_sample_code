@@ -35,7 +35,8 @@ public class AutoReloadWarranty {
      *                   these are old, but added against project just now. Therefore we need to
      *                   Check and pick any project that updated after last run of scheduler*/
     public static void doBasedWarrantiesForReload() throws ClassNotFoundException {
-       // get oracle connection
+        LogUtil.info("-------","Auto Reload Process Starts -----------");
+        // get oracle connection
         Connection oracleConnection = null;
         String url = "jdbc:oracle:thin:#envVariable.jdbcURL#";
         String username = "#envVariable.jdbcUserName#";
@@ -47,7 +48,7 @@ public class AutoReloadWarranty {
             lastRunTable = (FormDataDao)AppUtil.getApplicationContext().getBean("formDataDao");
             lastRunDateRow = lastRunTable.load(formId,tableName,primaryKey);
             lastRunDate = lastRunDateRow.getProperty("last_run_date");
-            LogUtil.info("date",lastRunDate);
+
 
             // get details from oracle
             Class.forName("oracle.jdbc.driver.OracleDriver");
@@ -57,11 +58,11 @@ public class AutoReloadWarranty {
             PreparedStatement dostmt = oracleConnection.prepareStatement(DOMasterQuery);
             dostmt.setString(1, lastRunDate);
             ResultSet dors = dostmt.executeQuery();
-            LogUtil.info("Statement executed","----");
+
             while (dors.next()) {
                 String strSONumber = (dors.getString("SO_NUMEBR") != null) ? dors.getString("SO_NUMEBR").toString() : "";
                 if(strSONumber != null && !strSONumber.isEmpty()){
-                    LogUtil.info("SO No",strSONumber);
+
                     soNumberSet.add(strSONumber);
                 }
             }
@@ -73,12 +74,23 @@ public class AutoReloadWarranty {
         } catch (SQLException ex) {
             throw new RuntimeException(ex);
         }
+        finally{
+            try{
+                if(oracleConnection != null && !oracleConnection.isClosed()) {
+                    oracleConnection.close();
+                }
+            }
+            catch(SQLException ex){
+
+            }
+        }
         // get project those are updated after last run of scheduler.
         projectBasedWarrantiesForReload();
         startAutoReload(lastRunDate);
         printProjectDetails();
         // update last run date to current date.
         updateLastRunDate();
+        LogUtil.info("-------","Auto Reload Process Ends -----------");
     }
 
     private static void updateLastRunDate() {
@@ -101,7 +113,7 @@ public class AutoReloadWarranty {
                     "c_rev_status = ? where c_selectedSONumbers LIKE ? " +
                     "AND c_Status_manager_approval = ?";
             for(Object so : soNumberSet) {
-                LogUtil.info("SO Number",so+"");
+                //LogUtil.info("SO Number",so+"");
                 String soString = (String)so;
                 PreparedStatement projectStatement = con.prepareStatement(query);
                 projectStatement.setString(1, "Active");
@@ -155,7 +167,7 @@ public class AutoReloadWarranty {
                 String projectNumber = set.getString(1);
                 String warrantyId = set.getString(2);
                 String salesOrder = set.getString(3);
-                LogUtil.info("Project Number",projectNumber);
+                //LogUtil.info("Project Number",projectNumber);
                 if(testProjectChange(projectNumber,appDbCon,salesOrder)) {
                     projectsToBeReloaded.put(projectNumber, warrantyId);
                 }
@@ -209,9 +221,9 @@ public class AutoReloadWarranty {
     }
 
     public static void printProjectDetails(){
-        for(Object projectNo : projectsToBeReloaded.keySet()){
-            LogUtil.info(projectNo+"",projectsToBeReloaded.get(projectNo)+"");
-        }
+        /*for(Object projectNo : projectsToBeReloaded.keySet()){
+            //LogUtil.info(projectNo+"",projectsToBeReloaded.get(projectNo)+"");
+        }*/
     }
     public static void startAutoReload(String lastRunDate){
         LocalDate lastRunDateObj = LocalDate.parse(lastRunDate,DateTimeFormatter.ISO_DATE);
@@ -227,7 +239,7 @@ public class AutoReloadWarranty {
                     dateFlag = true;
                 }
             }
-            if(dateFlag = true) {
+            if(dateFlag == true) {
                 modificationDate = LocalDate.ofInstant(row.getDateModified().toInstant(), ZoneId.systemDefault());
             }
             else{
@@ -242,7 +254,7 @@ public class AutoReloadWarranty {
                 variables.put("rId", projectsToBeReloaded.get(projectNo));
                 WorkflowManager workflowManager = (WorkflowManager) AppUtil.getApplicationContext().getBean("workflowManager");
                 String processDefId = "warrantyApplication#latest#warrantyLoadProcess";
-                LogUtil.info(projectNo.toString(),projectsToBeReloaded.get(projectNo)+"");
+
                 //Start a process with existing record
                 org.joget.workflow.model.WorkflowProcessResult processResult = workflowManager.processStart(processDefId, variables);
             }

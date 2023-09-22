@@ -9,9 +9,8 @@ import org.joget.apps.form.model.FormRow;
 import javax.sql.DataSource;
 
 public class TotalColumnCountFormatter {
-    public String format(){
+    public String format(FormRow row){
         String totalCount = "0";
-        FormRow row = null;
         String billToCode = (String)row.get("invoice_e_status");
         DataSource ds = (DataSource) AppUtil.getApplicationContext().getBean("setupDataSource");
         Connection con = null;
